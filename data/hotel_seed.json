@@ -1,0 +1,28 @@
+{
+  "hotel_name": "Hotel Nusantara Demo",
+  "guests": [
+    {"id": "G001", "name": "Tamu Demo"}
+  ],
+  "reservations": [
+    {"id": "RES001", "guest_id": "G001", "room_id": "R101", "room_type": "standard", "nightly_rate": 500000, "status": "checked_in", "version": 1}
+  ],
+  "rooms": [
+    {"id": "R101", "room_type": "standard", "nightly_rate": 500000, "occupied_by": "RES001", "version": 1},
+    {"id": "R102", "room_type": "standard", "nightly_rate": 500000, "occupied_by": null, "version": 1},
+    {"id": "R103", "room_type": "standard", "nightly_rate": 500000, "occupied_by": null, "version": 1},
+    {"id": "R201", "room_type": "deluxe", "nightly_rate": 750000, "occupied_by": null, "version": 1}
+  ],
+  "folio_entries": [
+    {"id": "F01", "reservation_id": "RES001", "description": "Kamar 1 malam", "amount": 500000},
+    {"id": "F02", "reservation_id": "RES001", "description": "Minibar", "amount": 150000}
+  ],
+  "faq": [
+    {"key": "check_in", "answer": "Waktu check-in Hotel Nusantara Demo mulai pukul 14.00."}
+  ],
+  "room_readiness": [
+    {"room_id": "R101", "cleanliness": "clean", "maintenance_blocked": true, "evidence_version": 1},
+    {"room_id": "R102", "cleanliness": "dirty", "maintenance_blocked": false, "evidence_version": 1},
+    {"room_id": "R103", "cleanliness": "clean", "maintenance_blocked": false, "evidence_version": 1},
+    {"room_id": "R201", "cleanliness": "clean", "maintenance_blocked": false, "evidence_version": 1}
+  ]
+}

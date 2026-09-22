@@ -1,0 +1,84 @@
+{
+  "S01": {
+    "id": "S01",
+    "button_label": "S01 — AC rusak: kamar pengganti tersedia",
+    "guest_message": "AC kamar saya rusak. Saya ingin pindah ke kamar setara.",
+    "intent": "ROOM_CHANGE_AC",
+    "flow": "room_change",
+    "features": {"intent_complexity": 2, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S02": {
+    "id": "S02",
+    "button_label": "S02 — AC rusak: kamar setara habis",
+    "guest_message": "AC rusak. Kalau kamar setara habis, saya ingin upgrade gratis.",
+    "intent": "ROOM_CHANGE_AC_UPGRADE_REQUEST",
+    "flow": "room_change",
+    "features": {"intent_complexity": 3, "risk_level": 1, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {"upgrade_exception": true, "compensation_requested": true},
+    "include_upgrade_alternatives": true,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {
+      "reservations": [
+        {"id": "RESD01", "guest_id": "G001", "room_id": "R102", "room_type": "standard", "nightly_rate": 500000, "status": "checked_in", "version": 1},
+        {"id": "RESD02", "guest_id": "G001", "room_id": "R103", "room_type": "standard", "nightly_rate": 500000, "status": "checked_in", "version": 1}
+      ],
+      "rooms": [
+        {"id": "R102", "room_type": "standard", "nightly_rate": 500000, "occupied_by": "RESD01", "version": 1},
+        {"id": "R103", "room_type": "standard", "nightly_rate": 500000, "occupied_by": "RESD02", "version": 1}
+      ]
+    }
+  },
+  "S03": {
+    "id": "S03",
+    "button_label": "S03 — Sengketa tagihan",
+    "guest_message": "Saya tidak mengenali tagihan minibar Rp150.000. Tolong hapus.",
+    "intent": "BILLING_DISPUTE",
+    "flow": "billing_dispute",
+    "features": {"intent_complexity": 4, "risk_level": 1, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {"financial_dispute": true},
+    "include_upgrade_alternatives": false,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S04": {
+    "id": "S04",
+    "button_label": "S04 — Informasi check-in",
+    "guest_message": "Jam check-in hotel berapa?",
+    "intent": "FAQ_CHECK_IN",
+    "flow": "faq",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "faq_key": "check_in",
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S05": {
+    "id": "S05",
+    "button_label": "S05 — Minta handuk",
+    "guest_message": "Tolong antar handuk ke kamar saya.",
+    "intent": "REQUEST_TOWELS",
+    "flow": "housekeeping",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S06": {
+    "id": "S06",
+    "button_label": "S06 — Rincian tagihan",
+    "guest_message": "Tampilkan rincian tagihan saya.",
+    "intent": "BILLING_DETAILS",
+    "flow": "billing_details",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  }
+}
