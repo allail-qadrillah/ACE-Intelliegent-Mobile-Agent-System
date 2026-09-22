@@ -176,7 +176,7 @@ def _decision_panel(snapshot: Dict[str, Any]) -> None:
         return
     columns = st.columns(4)
     columns[0].metric("p(human_judgment)", f"{case['p_human']:.4f}")
-    columns[1].metric("Threshold", f"{snapshot['scenario'].get('threshold', 0.80)}")
+    columns[1].metric("Threshold", f"{snapshot['threshold']}")
     columns[2].metric("Model recommends human", "Ya" if case["model_recommends_human"] else "Tidak")
     columns[3].metric("human_required", "Ya" if case["human_required"] else "Tidak")
     st.caption(

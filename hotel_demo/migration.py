@@ -34,6 +34,7 @@ FORBIDDEN_CHECKPOINT_FIELDS = {
     "functions",
     "pipeline",
     "credentials",
+    "capabilities",
 }
 
 REQUIRED_CHECKPOINT_FIELDS = {

@@ -652,9 +652,11 @@ class Simulation:
                 restored = True
 
         agent = self.agents.get(record.agent_id)
-        if agent is not None:
+        if agent is not None and departed:
+            # Sesudah DEPART, migrasi yang gagal menandai investigator FAILED.
             agent.status = AgentRuntimeStatus.FAILED.value
             agent.phase = AgentPhase.FAILED.value
+        if agent is not None:
             agent.last_action = f"MIGRATION_FAILED:{exc.code}"
 
         self.migration = None
@@ -806,6 +808,7 @@ class Simulation:
             "active_mode": self.active_mode,
             "scenario_id": self.scenario_id,
             "scenario": self.scenario,
+            "threshold": self.threshold,
             "step_index": self.step_index,
             "case": None if self.case is None else self.case.to_dict(),
             "nodes": {
