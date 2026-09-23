@@ -6,6 +6,7 @@ import streamlit as st
 
 from hotel_demo import ml
 from hotel_demo.ui import (
+    render_autorun_tab,
     render_evaluation_tab,
     render_header,
     render_landing_page,
@@ -31,8 +32,8 @@ def main() -> None:
     simulation = st.session_state.get("simulation")
     snapshot = simulation.snapshot() if simulation is not None else None
 
-    tab_beranda, tab_simulation, tab_trace, tab_evaluation = st.tabs(
-        ["🏠 Beranda", "⚡ Simulasi", "🔍 Jejak & State", "📊 Evaluasi"]
+    tab_beranda, tab_simulation, tab_trace, tab_evaluation, tab_autorun = st.tabs(
+        ["🏠 Beranda", "⚡ Simulasi", "🔍 Jejak & State", "📊 Evaluasi", "🎯 Uji Skenario"]
     )
     with tab_beranda:
         render_landing_page(model)
@@ -42,6 +43,8 @@ def main() -> None:
         render_trace_tab(snapshot, simulation)
     with tab_evaluation:
         render_evaluation_tab(model)
+    with tab_autorun:
+        render_autorun_tab(model)
 
 
 main()

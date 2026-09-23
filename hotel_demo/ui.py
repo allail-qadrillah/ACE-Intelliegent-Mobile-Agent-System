@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import streamlit as st
 
-from .evaluation import comparison_table_rows, run_comparison
+from .evaluation import comparison_table_rows, run_comparison, run_single
 from .ml import DATASET_NOTE
 from .simulation import SCENARIO_ORDER, Simulation, load_scenarios
 
@@ -70,7 +70,14 @@ def render_landing_page(model: Any) -> None:
     )
 
     badge_cols = st.columns(6)
-    badges = ["🟢 Lokal", "🧪 Data Sintetis", "🔒 Tanpa API", "🐍 Python", "📦 Satu Proses", "👥 Kelompok 5"]
+    badges = [
+        "🟢 Lokal",
+        "🧪 Data Sintetis",
+        "🔒 Tanpa API",
+        "🐍 Python",
+        "📦 Satu Proses",
+        "👥 Kelompok 5",
+    ]
     for col, badge in zip(badge_cols, badges):
         col.markdown(
             f"<div style='text-align:center; background:#f0f2f6; border-radius:8px; "
@@ -155,10 +162,26 @@ def render_landing_page(model: Any) -> None:
     step_cols = st.columns(4)
 
     steps = [
-        ("📋", "1. Pilih Skenario", "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S06."),
-        ("🔄", "2. Jalankan Simulasi", "Tekan **\"Langkah Berikutnya\"** di tab Simulasi untuk maju step-by-step."),
-        ("🔍", "3. Lihat Jejak", "Buka tab **\"Jejak & State\"** untuk melihat pesan, event, dan checkpoint migrasi."),
-        ("📊", "4. Evaluasi", "Buka tab **\"Evaluasi\"** dan klik **\"Jalankan Perbandingan\"** untuk membandingkan Mobile vs Static."),
+        (
+            "📋",
+            "1. Pilih Skenario",
+            "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S06.",
+        ),
+        (
+            "🔄",
+            "2. Jalankan Simulasi",
+            'Tekan **"Langkah Berikutnya"** di tab Simulasi untuk maju step-by-step.',
+        ),
+        (
+            "🔍",
+            "3. Lihat Jejak",
+            'Buka tab **"Jejak & State"** untuk melihat pesan, event, dan checkpoint migrasi.',
+        ),
+        (
+            "📊",
+            "4. Evaluasi",
+            'Buka tab **"Evaluasi"** dan klik **"Jalankan Perbandingan"** untuk membandingkan Mobile vs Static.',
+        ),
     ]
 
     for col, (emoji, title, desc) in zip(step_cols, steps):
@@ -177,7 +200,9 @@ def render_landing_page(model: Any) -> None:
 
     # ── 6 Skenario ───────────────────────────────────────────────────────
     st.markdown("## 🎬 6 Skenario Demo")
-    st.caption("Klik tombol di sidebar kiri untuk memulai skenario, atau pilih mode agen terlebih dahulu.")
+    st.caption(
+        "Klik tombol di sidebar kiri untuk memulai skenario, atau pilih mode agen terlebih dahulu."
+    )
 
     for sid, info in SCENARIO_DESCRIPTIONS.items():
         with st.container(border=True):
@@ -407,7 +432,9 @@ def _result_text(snapshot: Dict[str, Any]) -> Optional[str]:
             return f"Tiket {ticket_id} dibuat; menunggu pekerjaan staf."
         if case["flow"] == "billing_details":
             folio = case.get("evidence", {}).get("folio", {})
-            return f"Rincian tagihan total Rp{folio.get('total', 0):,}".replace(",", ".")
+            return f"Rincian tagihan total Rp{folio.get('total', 0):,}".replace(
+                ",", "."
+            )
         return "Kasus selesai secara digital."
     if status == "FAILED":
         return "Kasus gagal secara teknis; lihat detail kegagalan."
@@ -421,7 +448,9 @@ def _decision_panel(snapshot: Dict[str, Any]) -> None:
     columns = st.columns(4)
     columns[0].metric("p(human_judgment)", f"{case['p_human']:.4f}")
     columns[1].metric("Threshold", f"{snapshot['threshold']}")
-    columns[2].metric("Model recommends human", "Ya" if case["model_recommends_human"] else "Tidak")
+    columns[2].metric(
+        "Model recommends human", "Ya" if case["model_recommends_human"] else "Tidak"
+    )
     columns[3].metric("human_required", "Ya" if case["human_required"] else "Tidak")
     st.caption(
         f"mandatory_reasons: {case['mandatory_reasons'] or '-'} · "
@@ -431,12 +460,16 @@ def _decision_panel(snapshot: Dict[str, Any]) -> None:
     )
 
 
-def render_simulation_tab(snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]) -> None:
+def render_simulation_tab(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+) -> None:
     if snapshot is None or simulation is None:
         st.info("Pilih salah satu skenario di sidebar untuk memulai run baru.")
         return
 
-    st.markdown(f"**Mode aktif:** `{snapshot['active_mode']}` · **Run:** `{snapshot['run_id']}`")
+    st.markdown(
+        f"**Mode aktif:** `{snapshot['active_mode']}` · **Run:** `{snapshot['run_id']}`"
+    )
     case = snapshot["case"]
     if case is not None:
         st.markdown(f"**Pesan tamu:** “{case['guest_message']}”")
@@ -469,7 +502,9 @@ def render_simulation_tab(snapshot: Optional[Dict[str, Any]], simulation: Option
                 f"size {migration.get('checkpoint_size', 0)} byte"
             )
             if migration["stage"] in ("INITIATED", "PREPARED", "DEPARTED"):
-                st.warning("Agen berada di jalur transfer; tidak ada instance aktif pada node mana pun.")
+                st.warning(
+                    "Agen berada di jalur transfer; tidak ada instance aktif pada node mana pun."
+                )
 
     st.divider()
     control_columns = st.columns([1, 1, 2])
@@ -559,18 +594,25 @@ def render_simulation_tab(snapshot: Optional[Dict[str, Any]], simulation: Option
                     st.rerun()
 
 
-def render_trace_tab(snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]) -> None:
+def render_trace_tab(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+) -> None:
     if snapshot is None or simulation is None:
         st.info("Belum ada run.")
         return
 
     st.markdown("#### Metrik")
     metrics = snapshot["metrics"]
-    total_payload = metrics["inter_node_message_bytes"] + metrics["transferred_checkpoint_bytes"]
+    total_payload = (
+        metrics["inter_node_message_bytes"] + metrics["transferred_checkpoint_bytes"]
+    )
     columns = st.columns(4)
     columns[0].metric("Pesan (MESSAGE_SENT)", metrics["messages_sent"])
     columns[1].metric("Pesan antar-node", metrics["inter_node_messages"])
-    columns[2].metric("Migrasi sukses/gagal", f"{metrics['migrations_succeeded']}/{metrics['migrations_failed']}")
+    columns[2].metric(
+        "Migrasi sukses/gagal",
+        f"{metrics['migrations_succeeded']}/{metrics['migrations_failed']}",
+    )
     columns[3].metric("Byte checkpoint", metrics["transferred_checkpoint_bytes"])
     columns = st.columns(4)
     columns[0].metric("Total payload simulasi (byte)", total_payload)
@@ -699,7 +741,12 @@ def render_ml_report(model: Any) -> None:
         f"confusion matrix {metrics['confusion_matrix']['matrix']}"
     )
     with st.expander("Manifest & prediksi uji", expanded=False):
-        st.json({"manifest": report["manifest"], "test_predictions": report["test_predictions"]})
+        st.json(
+            {
+                "manifest": report["manifest"],
+                "test_predictions": report["test_predictions"],
+            }
+        )
 
 
 def render_evaluation_tab(model: Any) -> None:
@@ -723,3 +770,203 @@ def render_evaluation_tab(model: Any) -> None:
             st.success(f"Semua {len(assertions)} assertion kesetaraan lulus.")
     st.divider()
     render_ml_report(model)
+
+
+def _run_scenario_auto(model: Any, scenario_id: str, mode: str) -> Dict[str, Any]:
+    """Run a scenario to completion and return its summary."""
+    return run_single(scenario_id=scenario_id, mode=mode, model=model)
+
+
+_STATUS_BADGES: Dict[str, str] = {
+    "DIGITAL_COMPLETED": "🟢",
+    "WAITING_HUMAN": "🟡",
+    "WAITING_GUEST": "🔵",
+    "HUMAN_HANDLING": "🟠",
+    "CLOSED_GUEST_DECLINED": "⚪",
+    "CLOSED_BY_STAFF": "⚪",
+    "FAILED": "🔴",
+    "PROCESSING": "⏳",
+    "CREATED": "⏳",
+}
+
+
+def render_autorun_tab(model: Any) -> None:
+    """Render the one-click auto-run tab for all 6 scenarios."""
+
+    st.markdown("## 🎯 Uji Otomatis Skenario")
+    st.markdown(
+        "Jalankan setiap skenario secara **otomatis sampai selesai** dengan satu klik. "
+        "Tidak perlu menekan \"Langkah Berikutnya\" berulang kali — simulasi berjalan "
+        "otomatis termasuk persetujuan tamu (S01) dan eskalasi staf (S02/S03)."
+    )
+
+    st.divider()
+
+    # ── Mode selection ───────────────────────────────────────────────────
+    mode_col, run_all_col = st.columns([3, 1])
+    with mode_col:
+        auto_mode = st.radio(
+            "Mode agen untuk pengujian otomatis",
+            options=["mobile", "static"],
+            format_func=lambda v: MODE_LABELS[v],
+            horizontal=True,
+            key="autorun_mode",
+        )
+    with run_all_col:
+        run_all = st.button(
+            "▶️ Jalankan Semua",
+            key="autorun_all",
+            use_container_width=True,
+            type="primary",
+        )
+
+    st.divider()
+
+    # ── Run all at once ──────────────────────────────────────────────────
+    if run_all:
+        all_results = {}
+        progress = st.progress(0, text="Memulai pengujian semua skenario...")
+        for idx, sid in enumerate(SCENARIO_ORDER):
+            progress.progress(
+                (idx) / len(SCENARIO_ORDER),
+                text=f"Menjalankan {sid}...",
+            )
+            result = _run_scenario_auto(model, sid, auto_mode)
+            all_results[sid] = result
+            st.session_state[f"autorun_{sid}"] = result
+        progress.progress(1.0, text="✅ Semua skenario selesai!")
+        st.session_state["autorun_summary"] = all_results
+
+    # ── Per-scenario buttons ─────────────────────────────────────────────
+    st.markdown("### Jalankan Per Skenario")
+
+    for sid in SCENARIO_ORDER:
+        info = SCENARIO_DESCRIPTIONS[sid]
+        session_key = f"autorun_{sid}"
+
+        with st.container(border=True):
+            header_col, btn_col = st.columns([9, 3])
+
+            with header_col:
+                st.markdown(f"### {info['emoji']} {sid} — {info['judul']}")
+                st.caption(info["deskripsi"])
+
+            with btn_col:
+                if st.button(
+                    f"▶️ Jalankan {sid}",
+                    key=f"autorun_btn_{sid}",
+                    use_container_width=True,
+                    type="secondary",
+                ):
+                    with st.spinner(f"Menjalankan {sid}..."):
+                        result = _run_scenario_auto(model, sid, auto_mode)
+                        st.session_state[session_key] = result
+
+            # ── Show results if available ────────────────────────────────
+            result = st.session_state.get(session_key)
+            if result is not None:
+                status = result.get("status", "UNKNOWN")
+                badge = _STATUS_BADGES.get(status, "⚪")
+
+                # Status row
+                s1, s2, s3, s4 = st.columns(4)
+                s1.metric("Status", f"{badge} {status}")
+                s2.metric("Mode", result.get("mode", "-"))
+                s3.metric("Migrasi", result.get("migrations_succeeded", 0))
+                s4.metric("Kamar Akhir", result.get("assigned_room_id", "-"))
+
+                # Metrics row
+                m1, m2, m3, m4, m5 = st.columns(5)
+                m1.metric("Steps", result.get("engine_steps", 0))
+                m2.metric("Pesan", result.get("messages_sent", 0))
+                m3.metric("Pesan Antar-Node", result.get("inter_node_messages", 0))
+                m4.metric("Payload (byte)", result.get("total_simulated_payload_bytes", 0))
+                m5.metric("Compute (ms)", result.get("engine_compute_ms", 0))
+
+                # Decision info
+                st.caption(
+                    f"p(human_judgment): {result.get('p_human', '-')} · "
+                    f"human_required: {'Ya' if result.get('human_required') else 'Tidak'} · "
+                    f"decision_source: {result.get('decision_source', '-')} · "
+                    f"tiket: {result.get('ticket_count', 0)}"
+                )
+
+                # Inspection results
+                if result.get("inspection_results"):
+                    with st.expander(f"🔍 Hasil Inspeksi {sid}", expanded=False):
+                        st.dataframe(
+                            [
+                                {
+                                    "room_id": item["room_id"],
+                                    "room_type": item["room_type"],
+                                    "rate": item["nightly_rate"],
+                                    "is_ready": item["is_ready"],
+                                    "eligible": item["is_routine_eligible"],
+                                    "reason_codes": ", ".join(item["reason_codes"]),
+                                }
+                                for item in result["inspection_results"]
+                            ],
+                            use_container_width=True,
+                        )
+
+    # ── Summary table ────────────────────────────────────────────────────
+    st.divider()
+    st.markdown("### 📊 Ringkasan Semua Skenario")
+
+    summary_data = []
+    all_run = True
+    for sid in SCENARIO_ORDER:
+        result = st.session_state.get(f"autorun_{sid}")
+        if result is None:
+            all_run = False
+            summary_data.append({
+                "Skenario": sid,
+                "Status": "⏳ Belum dijalankan",
+                "Mode": "-",
+                "Kamar Akhir": "-",
+                "Migrasi": "-",
+                "Steps": "-",
+                "Pesan": "-",
+                "Payload (byte)": "-",
+                "Compute (ms)": "-",
+            })
+        else:
+            status = result.get("status", "UNKNOWN")
+            badge = _STATUS_BADGES.get(status, "⚪")
+            summary_data.append({
+                "Skenario": sid,
+                "Status": f"{badge} {status}",
+                "Mode": result.get("mode", "-"),
+                "Kamar Akhir": result.get("assigned_room_id", "-"),
+                "Migrasi": result.get("migrations_succeeded", 0),
+                "Steps": result.get("engine_steps", 0),
+                "Pesan": result.get("messages_sent", 0),
+                "Payload (byte)": result.get("total_simulated_payload_bytes", 0),
+                "Compute (ms)": result.get("engine_compute_ms", 0),
+            })
+
+    st.dataframe(summary_data, use_container_width=True, hide_index=True)
+
+    if all_run:
+        completed = sum(
+            1 for sid in SCENARIO_ORDER
+            if (st.session_state.get(f"autorun_{sid}") or {}).get("status")
+            in ("DIGITAL_COMPLETED", "WAITING_HUMAN", "CLOSED_BY_STAFF")
+        )
+        st.success(
+            f"✅ Semua {len(SCENARIO_ORDER)} skenario telah diuji. "
+            f"{completed}/{len(SCENARIO_ORDER)} berhasil mencapai status akhir yang valid."
+        )
+    else:
+        not_run = sum(1 for sid in SCENARIO_ORDER if st.session_state.get(f"autorun_{sid}") is None)
+        st.info(
+            f"Masih ada {not_run} skenario yang belum dijalankan. "
+            f"Klik tombol per skenario atau \"▶️ Jalankan Semua\"."
+        )
+
+    # Reset button
+    if st.button("🗑️ Reset Semua Hasil", key="autorun_reset"):
+        for sid in SCENARIO_ORDER:
+            st.session_state.pop(f"autorun_{sid}", None)
+        st.session_state.pop("autorun_summary", None)
+        st.rerun()
