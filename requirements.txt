@@ -1,4 +1,14 @@
-streamlit==1.39.0
+# Core libraries
+streamlit>=1.40            # newer than 1.39 so it allows watchdog ≥ 6
 scikit-learn==1.5.2
 numpy==1.26.4
-pytest==8.3.3
+
+# Testing
+pytest>=8.4,<10            # satisfies pytest‑asyncio
+pytest-asyncio>=1.4.0,<2.0
+
+# Watchdog – choose the range required by google‑adk (≥ 6,< 7)
+watchdog>=6,<7
+
+# Google ADK – keep the latest stable release (still compatible with watchdog ≥ 6)
+google-adk==2.9.2
