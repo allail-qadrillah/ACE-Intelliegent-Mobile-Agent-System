@@ -8,6 +8,7 @@ from hotel_demo import ml
 from hotel_demo.ui import (
     render_evaluation_tab,
     render_header,
+    render_landing_page,
     render_sidebar,
     render_simulation_tab,
     render_trace_tab,
@@ -30,7 +31,11 @@ def main() -> None:
     simulation = st.session_state.get("simulation")
     snapshot = simulation.snapshot() if simulation is not None else None
 
-    tab_simulation, tab_trace, tab_evaluation = st.tabs(["Simulasi", "Jejak & State", "Evaluasi"])
+    tab_beranda, tab_simulation, tab_trace, tab_evaluation = st.tabs(
+        ["🏠 Beranda", "⚡ Simulasi", "🔍 Jejak & State", "📊 Evaluasi"]
+    )
+    with tab_beranda:
+        render_landing_page(model)
     with tab_simulation:
         render_simulation_tab(snapshot, simulation)
     with tab_trace:

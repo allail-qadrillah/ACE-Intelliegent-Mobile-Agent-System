@@ -13,6 +13,250 @@ from .simulation import SCENARIO_ORDER, Simulation, load_scenarios
 
 MODE_LABELS = {"mobile": "Mobile Agent", "static": "Static Agent"}
 
+SCENARIO_DESCRIPTIONS: Dict[str, Dict[str, str]] = {
+    "S01": {
+        "judul": "AC Rusak — Kamar Pengganti Tersedia",
+        "deskripsi": "Tamu melaporkan AC rusak dan minta pindah ke kamar setara.",
+        "hasil": "Migrasi agen → inspeksi R102 (DIRTY) & R103 (READY) → proposal → persetujuan tamu → commit",
+        "emoji": "❄️",
+    },
+    "S02": {
+        "judul": "AC Rusak — Minta Upgrade Gratis",
+        "deskripsi": "Kamar setara habis, tamu minta upgrade gratis.",
+        "hasil": "Migrasi tetap terjadi, evidence R201 terkumpul → WAITING_HUMAN (upgrade butuh staf)",
+        "emoji": "⬆️",
+    },
+    "S03": {
+        "judul": "Sengketa Tagihan Minibar",
+        "deskripsi": "Tamu tidak mengenali tagihan minibar Rp150.000.",
+        "hasil": "Billing membaca folio → eskalasi wajib → WAITING_HUMAN",
+        "emoji": "💰",
+    },
+    "S04": {
+        "judul": "Informasi Jam Check-In",
+        "deskripsi": "Tamu bertanya jam check-in hotel.",
+        "hasil": "Jawaban FAQ lokal: 14.00 → selesai tanpa tiket/migrasi",
+        "emoji": "🕐",
+    },
+    "S05": {
+        "judul": "Permintaan Handuk",
+        "deskripsi": "Tamu minta handuk diantar ke kamar.",
+        "hasil": "Tiket housekeeping dibuat (PENDING → DONE oleh staf)",
+        "emoji": "🛁",
+    },
+    "S06": {
+        "judul": "Rincian Tagihan",
+        "deskripsi": "Tamu minta tampilkan rincian tagihan.",
+        "hasil": "Folio F01+F02 ditampilkan, total Rp650.000, tanpa perubahan",
+        "emoji": "🧾",
+    },
+}
+
+
+def render_landing_page(model: Any) -> None:
+    """Render the user-friendly landing / onboarding page."""
+
+    # ── Hero Section ─────────────────────────────────────────────────────
+    st.markdown(
+        """
+        <div style="text-align:center; padding: 1.5rem 0 0.5rem 0;">
+            <h1 style="margin-bottom:0.2rem;">🏨 ACE — Intelligent Mobile Agent System</h1>
+            <p style="font-size:1.25rem; color:#555;">
+                Simulasi Multi-Agent Customer Service Hotel
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    badge_cols = st.columns(6)
+    badges = ["🟢 Lokal", "🧪 Data Sintetis", "🔒 Tanpa API", "🐍 Python", "📦 Satu Proses", "👥 Kelompok 5"]
+    for col, badge in zip(badge_cols, badges):
+        col.markdown(
+            f"<div style='text-align:center; background:#f0f2f6; border-radius:8px; "
+            f"padding:6px 4px; font-size:0.85rem;'>{badge}</div>",
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    # ── Apa Itu Aplikasi Ini? ────────────────────────────────────────────
+    st.markdown("## 📖 Apa Itu Aplikasi Ini?")
+    st.markdown(
+        "Aplikasi ini adalah **simulasi multi-agent customer service hotel** yang dibuat "
+        "untuk mata kuliah **Agent Enterprise** (Semester 3). Aplikasi mensimulasikan "
+        "bagaimana beberapa agen AI bekerja sama menangani permintaan tamu hotel — mulai "
+        "dari keluhan AC rusak, sengketa tagihan, hingga permintaan handuk.\n\n"
+        "Fitur utamanya adalah **Mobile Agent**: agen yang dapat **berpindah (migrasi)** "
+        "antar node logis dalam satu proses Python untuk menginspeksi data di tempat, "
+        "bukan mengirim data ke agen lain. Semua data bersifat sintetis dan berjalan "
+        "sepenuhnya **offline** tanpa API atau LLM."
+    )
+
+    st.divider()
+
+    # ── Arsitektur Sistem ────────────────────────────────────────────────
+    st.markdown("## 🏗️ Arsitektur Sistem")
+    st.markdown(
+        "Sistem terdiri dari **dua node logis** dalam satu proses Python, "
+        "masing-masing dengan database SQLite in-memory terpisah."
+    )
+
+    arch_left, arch_mid, arch_right = st.columns([5, 2, 5])
+
+    with arch_left:
+        st.markdown(
+            """
+            #### 🏢 Node: FRONT_OFFICE
+            | Agen | Tugas |
+            |------|-------|
+            | **Scenario Scout** | Klasifikasi permintaan tamu |
+            | **Orchestrator** | Routing kasus ke agen yang tepat |
+            | **Reservation** | Kelola pemindahan kamar |
+            | **Billing** | Baca & kelola folio tagihan |
+            | **Concierge** | Jawab FAQ & permintaan sederhana |
+            """
+        )
+
+    with arch_mid:
+        st.markdown(
+            """
+            <div style="display:flex; flex-direction:column; align-items:center;
+                        justify-content:center; height:100%; padding-top:3rem;">
+                <div style="font-size:2rem;">🔄</div>
+                <div style="font-size:0.8rem; color:#888; text-align:center;">
+                    Migrasi<br>State<br>Agent
+                </div>
+                <div style="font-size:1.5rem;">⇄</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with arch_right:
+        st.markdown(
+            """
+            #### 🔧 Node: OPERATIONS
+            | Agen | Tugas |
+            |------|-------|
+            | **Operations** | Kelola status kamar & housekeeping |
+            | **Mobile Investigator** | Inspeksi kamar di tempat (setelah migrasi) |
+
+            *Mobile Investigator berpindah dari FRONT_OFFICE ke OPERATIONS*
+            *melalui checkpoint JSON dengan validasi SHA-256.*
+            """
+        )
+
+    st.divider()
+
+    # ── Cara Menggunakan ─────────────────────────────────────────────────
+    st.markdown("## 🚀 Cara Menggunakan")
+
+    step_cols = st.columns(4)
+
+    steps = [
+        ("📋", "1. Pilih Skenario", "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S06."),
+        ("🔄", "2. Jalankan Simulasi", "Tekan **\"Langkah Berikutnya\"** di tab Simulasi untuk maju step-by-step."),
+        ("🔍", "3. Lihat Jejak", "Buka tab **\"Jejak & State\"** untuk melihat pesan, event, dan checkpoint migrasi."),
+        ("📊", "4. Evaluasi", "Buka tab **\"Evaluasi\"** dan klik **\"Jalankan Perbandingan\"** untuk membandingkan Mobile vs Static."),
+    ]
+
+    for col, (emoji, title, desc) in zip(step_cols, steps):
+        with col:
+            st.markdown(
+                f"<div style='background:#f0f2f6; border-radius:12px; padding:1rem; "
+                f"text-align:center; min-height:180px;'>"
+                f"<div style='font-size:2rem;'>{emoji}</div>"
+                f"<div style='font-weight:bold; margin:0.5rem 0;'>{title}</div>"
+                f"<div style='font-size:0.85rem; color:#555;'>{desc}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+    st.divider()
+
+    # ── 6 Skenario ───────────────────────────────────────────────────────
+    st.markdown("## 🎬 6 Skenario Demo")
+    st.caption("Klik tombol di sidebar kiri untuk memulai skenario, atau pilih mode agen terlebih dahulu.")
+
+    for sid, info in SCENARIO_DESCRIPTIONS.items():
+        with st.container(border=True):
+            c1, c2 = st.columns([1, 11])
+            with c1:
+                st.markdown(
+                    f"<div style='font-size:2.5rem; text-align:center; padding-top:0.5rem;'>"
+                    f"{info['emoji']}</div>",
+                    unsafe_allow_html=True,
+                )
+            with c2:
+                st.markdown(f"**{sid} — {info['judul']}**")
+                st.markdown(f"{info['deskripsi']}")
+                st.caption(f"Hasil: {info['hasil']}")
+
+    st.divider()
+
+    # ── Mobile vs Static ─────────────────────────────────────────────────
+    st.markdown("## ⚖️ Mobile Agent vs Static Agent")
+
+    cmp_left, cmp_right = st.columns(2)
+
+    with cmp_left:
+        st.markdown(
+            """
+            #### 🚀 Mobile Agent
+            - Investigator **berpindah** ke node Operations melalui checkpoint JSON
+            - Inspeksi dijalankan **di tempat** setelah migrasi tiba
+            - 1 migrasi sukses per skenario (S01/S02)
+            - Mendemonstrasikan konsep **mobile agent** dari literatur
+            """
+        )
+
+    with cmp_right:
+        st.markdown(
+            """
+            #### 🏢 Static Agent
+            - Investigator **tetap** di Front Office
+            - Mengirim batch `INSPECT_CANDIDATES` ke Operations Agent
+            - 0 migrasi
+            - Baseline perbandingan — **hasil bisnis identik**
+            """
+        )
+
+    st.info(
+        "💡 Kedua mode menggunakan **kernel evaluasi yang sama** (`evaluate_candidates()`). "
+        "Perbedaannya hanya pada **cara data diakses**: mobile agent berpindah ke data, "
+        "static agent meminta data dikirim ke tempatnya."
+    )
+
+    st.divider()
+
+    # ── Tentang Tim ──────────────────────────────────────────────────────
+    st.markdown("## 👥 Tentang Tim — Kelompok 5")
+
+    team_cols = st.columns(4)
+    team_members = [
+        ("👤", "M. Al lail Qadrillah"),
+        ("👤", "Dimas Prabowo"),
+        ("👤", "Monanta Alfiareza"),
+        ("👤", "Frans Alwan"),
+    ]
+
+    for col, (icon, name) in zip(team_cols, team_members):
+        with col:
+            st.markdown(
+                f"<div style='background:#f0f2f6; border-radius:12px; padding:1rem; "
+                f"text-align:center;'>"
+                f"<div style='font-size:2rem;'>{icon}</div>"
+                f"<div style='font-weight:600; margin-top:0.5rem;'>{name}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+    st.caption(
+        "Mata Kuliah: Agent Enterprise · Semester 3 · "
+        "Hotel fiktif **Hotel Nusantara Demo** · Seluruh data sintetis dan lokal."
+    )
+
 
 def render_header() -> None:
     st.title("Demo Mobile Agent Hotel")
