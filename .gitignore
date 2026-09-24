@@ -19,6 +19,7 @@ __pycache__/
 Thumbs.db
 Desktop.ini
 .DS_Store
+~$*
 
 # ML artifacts (generated)
 ml_report.json
