@@ -523,7 +523,10 @@ class OrchestratorAgent(BaseAgent):
                 suffix = "maintenance"
             else:
                 department = "HOUSEKEEPING"
-                description = f"Antar handuk ke kamar {case.original_room_id}"
+                if "bantal" in case.guest_message.lower():
+                    description = f"Antar bantal ke kamar {case.original_room_id}"
+                else:
+                    description = f"Antar handuk ke kamar {case.original_room_id}"
                 suffix = "housekeeping"
             sim.enqueue(
                 sim.make_message(

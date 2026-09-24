@@ -80,5 +80,44 @@
     "include_upgrade_alternatives": false,
     "constraints": {"room_type": "standard", "max_rate": 500000},
     "seed_overrides": {}
+  },
+  "S07": {
+    "id": "S07",
+    "button_label": "S07 — Informasi jam check-out",
+    "guest_message": "Jam check-out jam berapa ya? Dan bagaimana prosedur late check-out?",
+    "intent": "FAQ_CHECK_OUT",
+    "flow": "faq",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "faq_key": "check_out",
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S08": {
+    "id": "S08",
+    "button_label": "S08 — Minta bantal tambahan",
+    "guest_message": "Tolong kirimkan 2 bantal tambahan ke kamar saya.",
+    "intent": "REQUEST_EXTRA_PILLOWS",
+    "flow": "housekeeping",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
+  },
+  "S09": {
+    "id": "S09",
+    "button_label": "S09 — Informasi Wi-Fi hotel",
+    "guest_message": "Bagaimana cara menyambungkan internet Wi-Fi di kamar?",
+    "intent": "FAQ_WIFI",
+    "flow": "faq",
+    "features": {"intent_complexity": 1, "risk_level": 0, "prior_failed_attempts": 0, "context_missing": 0},
+    "flags": {},
+    "include_upgrade_alternatives": false,
+    "faq_key": "wifi",
+    "constraints": {"room_type": "standard", "max_rate": 500000},
+    "seed_overrides": {}
   }
 }
+

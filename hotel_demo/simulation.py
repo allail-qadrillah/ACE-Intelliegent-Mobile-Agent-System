@@ -52,7 +52,7 @@ from .repository import (
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 SCENARIOS_PATH = DATA_DIR / "scenarios.json"
 
-SCENARIO_ORDER = ["S01", "S02", "S03", "S04", "S05", "S06"]
+SCENARIO_ORDER = ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09"]
 
 
 def load_scenarios(path: Optional[Path] = None) -> Dict[str, Any]:

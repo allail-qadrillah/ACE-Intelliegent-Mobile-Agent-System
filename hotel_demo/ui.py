@@ -50,6 +50,24 @@ SCENARIO_DESCRIPTIONS: Dict[str, Dict[str, str]] = {
         "hasil": "Folio F01+F02 ditampilkan, total Rp650.000, tanpa perubahan",
         "emoji": "🧾",
     },
+    "S07": {
+        "judul": "Informasi Jam Check-Out",
+        "deskripsi": "Tamu bertanya jam check-out dan prosedur late check-out.",
+        "hasil": "Jawaban FAQ lokal: maksimal 12.00 WIB → selesai tanpa tiket",
+        "emoji": "🚪",
+    },
+    "S08": {
+        "judul": "Permintaan Bantal Tambahan",
+        "deskripsi": "Tamu minta 2 bantal tambahan diantar ke kamar.",
+        "hasil": "Tiket housekeeping dibuat (PENDING → DONE oleh staf)",
+        "emoji": "🛏️",
+    },
+    "S09": {
+        "judul": "Informasi Wi-Fi Hotel",
+        "deskripsi": "Tamu bertanya cara menyambungkan Wi-Fi di kamar.",
+        "hasil": "Jawaban FAQ lokal: SSID HotelNusantara_Guest → selesai tanpa tiket",
+        "emoji": "📶",
+    },
 }
 
 
@@ -970,3 +988,257 @@ def render_autorun_tab(model: Any) -> None:
             st.session_state.pop(f"autorun_{sid}", None)
         st.session_state.pop("autorun_summary", None)
         st.rerun()
+
+
+def render_guest_portal(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any
+) -> None:
+    """Customer / Guest Interactive Portal."""
+    st.markdown("## 🛎️ Portal Interaktif Layanan Tamu")
+    st.caption(
+        "Antarmuka ramah pengguna bagi tamu Hotel Nusantara untuk menyampaikan keluhan, "
+        "memantau respon agen AI secara real-time, dan mengonfirmasi pemindahan kamar."
+    )
+
+    st.divider()
+
+    # 1. Pilih Kebutuhan Layanan
+    st.markdown("### 💬 Pilih atau Ajukan Permintaan Anda")
+    mode = st.session_state.get("active_mode", "mobile")
+
+    col_presets, col_custom = st.columns([7, 5])
+
+    with col_presets:
+        st.markdown("**Pilihan Layanan Cepat (Presets Skenario):**")
+        cols = st.columns(3)
+        for i, sid in enumerate(SCENARIO_ORDER):
+            info = SCENARIO_DESCRIPTIONS.get(sid, {})
+            with cols[i % 3]:
+                if st.button(
+                    f"{info.get('emoji', '📌')} {info.get('judul', sid)}",
+                    key=f"guest_portal_launch_{sid}",
+                    use_container_width=True,
+                ):
+                    _start_scenario(model, sid, mode)
+                    st.rerun()
+
+    with col_custom:
+        with st.container(border=True):
+            st.markdown("**✍️ Simulasi Permintaan Tamu Kustom:**")
+            cat_choice = st.selectbox(
+                "Kategori Permintaan",
+                [
+                    "❄️ Keluhan Kamar / AC (Pindah Kamar)",
+                    "🛁 Layanan Housekeeping (Handuk/Bantal)",
+                    "🕐 Informasi Hotel (Check-in/Check-out)",
+                    "💰 Sengketa Tagihan / Folio",
+                ],
+                key="guest_custom_cat",
+            )
+            st.text_input(
+                "Tulis Pesan Anda",
+                placeholder="Contoh: AC kamar saya rusak, ingin pindah kamar...",
+                key="guest_custom_text",
+            )
+            if st.button(
+                "🚀 Kirim ke Asisten AI",
+                key="guest_custom_submit",
+                use_container_width=True,
+                type="primary",
+            ):
+                if "AC" in cat_choice:
+                    target_s = "S01"
+                elif "Housekeeping" in cat_choice:
+                    target_s = "S05"
+                elif "Informasi" in cat_choice:
+                    target_s = "S04"
+                else:
+                    target_s = "S03"
+                _start_scenario(model, target_s, mode)
+                st.rerun()
+
+    st.divider()
+
+    # 2. Status Percakapan & Respon AI
+    if snapshot is None or simulation is None:
+        st.info("Pilih salah satu layanan di atas untuk memulai interaksi dengan asisten hotel.")
+        return
+
+    case = snapshot.get("case")
+    guest_msg = case.get("guest_message") if case else "Belum ada pesan."
+    status = case.get("status") if case else "CREATED"
+
+    st.markdown("### 📱 Percakapan & Status Layanan")
+
+    # Guest chat bubble
+    room_id = case.get("original_room_id", "R101") if case else "R101"
+    st.markdown(
+        f"""
+        <div style="background:#E3F2FD; border-left: 5px solid #2196F3; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #1976D2;">👤 Anda (Tamu - Kamar {room_id}):</div>
+            <div style="font-size: 1rem; color: #333; margin-top: 4px;">"{guest_msg}"</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # Status Response Card
+    res_text = _result_text(snapshot)
+
+    if status == "WAITING_GUEST":
+        st.markdown(
+            """
+            <div style="background:#FFF9C4; border-left: 5px solid #FBC02D; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;">
+                <div style="font-size: 0.8rem; font-weight: bold; color: #F57F17;">🤖 Asisten AI Hotel:</div>
+                <div style="font-size: 1rem; color: #333; margin-top: 4px;">
+                    Kami telah menginspeksi kamar pengganti yang setara dan bersih. Mohon konfirmasi apakah Anda berkenan pindah.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        with st.container(border=True):
+            st.markdown(f"#### 🏨 Tawaran Kamar Pengganti: **{case.get('proposed_room_id')}**")
+            p_cols = st.columns(3)
+            p_cols[0].metric("Kamar Asal", case.get("original_room_id"))
+            p_cols[1].metric("Kamar Pengganti", case.get("proposed_room_id"))
+            p_cols[2].metric("Biaya Tambahan", "Rp0 (Gratis Setara)")
+
+            st.write("Kamar telah diverifikasi oleh Mobile Investigator di node Operations dalam status bersih dan siap huni.")
+
+            b_cols = st.columns(2)
+            if b_cols[0].button(
+                f"✅ Setuju Pindah ke Kamar {case.get('proposed_room_id')}",
+                key="guest_portal_accept",
+                type="primary",
+                use_container_width=True,
+            ):
+                simulation.submit_guest_choice(True, actor="GUEST")
+                st.rerun()
+            if b_cols[1].button(
+                "❌ Tolak & Tetap di Kamar Ini",
+                key="guest_portal_decline",
+                use_container_width=True,
+            ):
+                simulation.submit_guest_choice(False, actor="GUEST")
+                st.rerun()
+
+    elif status == "WAITING_HUMAN":
+        st.warning(
+            "⚠️ Permintaan Anda memerlukan peninjauan khusus dari staf atau manajer Front Office kami. "
+            "Tim kami saat ini sedang menindaklanjuti permohonan Anda."
+        )
+
+    elif status == "DIGITAL_COMPLETED":
+        st.success(f"🎉 Selesai: {res_text or 'Permintaan Anda telah berhasil ditangani oleh sistem.'}")
+
+    elif status == "CLOSED_GUEST_DECLINED":
+        st.info("ℹ️ Anda telah menolak tawaran kamar pengganti. Tiket perbaikan teknisi tetap kami jalankan.")
+
+    elif status == "CLOSED_BY_STAFF":
+        st.success(f"✅ Kasus telah diselesaikan dan ditutup oleh Staf Hotel. Catatan: {case.get('closed_note') or '-'}")
+
+    else:
+        st.info(f"⏳ Status saat ini: `{status}`. Sistem sedang memproses...")
+
+    # Advance step helper if pending
+    if snapshot.get("has_pending_work"):
+        st.caption("Pekerjaan agen masih berlangsung di latar belakang:")
+        if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary"):
+            simulation.step()
+            st.rerun()
+
+
+def render_staff_portal(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+) -> None:
+    """Staff Operations Dashboard."""
+    st.markdown("## 👔 Dashboard Operasional Staf Hotel")
+    st.caption("Pusat kendali tugas operasional untuk Front Office, Housekeeping, dan Teknisi Maintenance.")
+
+    if simulation is None or snapshot is None:
+        st.info("Belum ada simulasi yang berjalan. Pilih skenario di sidebar atau mulai dari Portal Tamu.")
+        return
+
+    case = snapshot.get("case")
+    tickets = snapshot.get("tickets", [])
+
+    # Metrics Overview
+    pending_tickets = [t for t in tickets if t["status"] == "PENDING"]
+    in_progress_tickets = [t for t in tickets if t["status"] == "IN_PROGRESS"]
+    done_tickets = [t for t in tickets if t["status"] == "DONE"]
+    escalation_waiting = (
+        1 if case and case.get("status") in ("WAITING_HUMAN", "HUMAN_HANDLING") else 0
+    )
+
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Kasus Perlu Penanganan Staf", escalation_waiting, delta="Eskalasi AI" if escalation_waiting else None)
+    m2.metric("Tiket Pending", len(pending_tickets))
+    m3.metric("Tiket In Progress", len(in_progress_tickets))
+    m4.metric("Tiket Selesai", len(done_tickets))
+
+    st.divider()
+
+    # Section 1: Escalation Inbox
+    st.markdown("### 🚨 Antrean Kasus Eskalasi Staf")
+    if case and case.get("status") in ("WAITING_HUMAN", "HUMAN_HANDLING"):
+        with st.container(border=True):
+            st.markdown(f"**Kasus `{case.get('case_id')}`** — Kamar: `{case.get('original_room_id')}`")
+            st.markdown(f"**Pesan Tamu:** “{case.get('guest_message')}”")
+            st.markdown(f"**Alasan Eskalasi:** `{', '.join(case.get('human_reason_codes', [])) or '-'}`")
+
+            if case.get("inspection_results"):
+                st.caption(
+                    "Bukti Inspeksi: "
+                    + ", ".join(
+                        f"{r['room_id']}: {','.join(r['reason_codes'])}"
+                        for r in case["inspection_results"]
+                    )
+                )
+
+            if case.get("status") == "WAITING_HUMAN":
+                if st.button("👤 Ambil Alih Kasus (Take Over)", key="staff_portal_takeover", type="primary"):
+                    simulation.staff_take_over()
+                    st.rerun()
+            else:
+                st.markdown("**Status: Kasus Sedang Ditangani oleh Anda**")
+                staff_note = st.text_area("Catatan Penyelesaian Staf (Wajib):", key="staff_portal_note")
+                if st.button("✅ Selesaikan & Tutup Kasus", key="staff_portal_close", type="primary"):
+                    out = simulation.staff_close_case(staff_note)
+                    if out.get("ok"):
+                        st.success("Kasus berhasil ditutup!")
+                        st.rerun()
+                    else:
+                        st.error("Catatan staf wajib diisi untuk menutup kasus.")
+    else:
+        st.success("✅ Tidak ada kasus yang membutuhkan intervensi staf saat ini. Semua kasus berjalan otomatis.")
+
+    st.divider()
+
+    # Section 2: Department Work Tickets
+    st.markdown("### 📋 Papan Kerja Tiket Tugas Fisik (Work Orders)")
+    if tickets:
+        for ticket in tickets:
+            with st.container(border=True):
+                c1, c2, c3 = st.columns([6, 3, 3])
+                with c1:
+                    dept_badge = "🔧" if ticket["department"] == "MAINTENANCE" else "🧹"
+                    st.markdown(f"**{dept_badge} {ticket['id']} — {ticket['department']}**")
+                    st.markdown(f"Lokasi: Kamar **{ticket['room_id']}** · Deskripsi: *{ticket['description']}*")
+                with c2:
+                    st.markdown(f"Status Saat Ini: `{ticket['status']}`")
+                with c3:
+                    if ticket["status"] == "PENDING":
+                        if st.button("▶️ Mulai Kerjakan", key=f"staff_portal_start_{ticket['id']}", use_container_width=True):
+                            simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
+                            st.rerun()
+                    elif ticket["status"] == "IN_PROGRESS":
+                        if st.button("✔️ Tandai Selesai", key=f"staff_portal_done_{ticket['id']}", type="primary", use_container_width=True):
+                            simulation.staff_update_ticket(ticket["id"], "DONE")
+                            st.rerun()
+                    else:
+                        st.markdown("✅ **Selesai**")
+    else:
+        st.info("Belum ada tiket pekerjaan fisik yang dibuat.")
+

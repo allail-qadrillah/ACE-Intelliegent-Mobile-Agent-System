@@ -274,3 +274,29 @@ def test_run_until_pause_reports_loop_limit(run_scenario):
     simulation = run_scenario("S01")
     # Tidak ada pekerjaan tertunda: run_until_pause harus langsung selesai.
     assert simulation.run_until_pause() == 0
+
+
+def test_s07_answers_check_out_faq(run_scenario):
+    simulation = run_scenario("S07")
+    case = simulation.case
+    assert case.status == "DIGITAL_COMPLETED"
+    assert "check-out" in case.evidence["faq"]["answer"].lower()
+    assert simulation.list_tickets() == []
+
+
+def test_s08_extra_pillows_housekeeping_ticket(run_scenario):
+    simulation = run_scenario("S08")
+    case = simulation.case
+    assert case.status == "DIGITAL_COMPLETED"
+    tickets = simulation.list_tickets()
+    assert len(tickets) == 1
+    assert tickets[0]["department"] == "HOUSEKEEPING"
+    assert "bantal" in tickets[0]["description"].lower()
+
+
+def test_s09_answers_wifi_faq(run_scenario):
+    simulation = run_scenario("S09")
+    case = simulation.case
+    assert case.status == "DIGITAL_COMPLETED"
+    assert "wi-fi" in case.evidence["faq"]["answer"].lower() or "wifi" in case.evidence["faq"]["answer"].lower()
+

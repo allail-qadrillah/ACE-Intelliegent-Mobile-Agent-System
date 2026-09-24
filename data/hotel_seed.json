@@ -17,7 +17,9 @@
     {"id": "F02", "reservation_id": "RES001", "description": "Minibar", "amount": 150000}
   ],
   "faq": [
-    {"key": "check_in", "answer": "Waktu check-in Hotel Nusantara Demo mulai pukul 14.00."}
+    {"key": "check_in", "answer": "Waktu check-in Hotel Nusantara Demo mulai pukul 14.00."},
+    {"key": "check_out", "answer": "Waktu check-out Hotel Nusantara Demo maksimal pukul 12.00 WIB. Untuk permohonan late check-out harap hubungi resepsionis."},
+    {"key": "wifi", "answer": "Layanan Wi-Fi kecepatan tinggi tersedia gratis di seluruh area hotel dengan SSID 'HotelNusantara_Guest' tanpa kata sandi."}
   ],
   "room_readiness": [
     {"room_id": "R101", "cleanliness": "clean", "maintenance_blocked": true, "evidence_version": 1},
