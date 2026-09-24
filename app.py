@@ -6,15 +6,10 @@ import streamlit as st
 
 from hotel_demo import ml
 from hotel_demo.ui import (
-    render_autorun_tab,
-    render_evaluation_tab,
-    render_guest_portal,
+    render_business_suite,
     render_header,
-    render_landing_page,
     render_sidebar,
-    render_simulation_tab,
-    render_staff_portal,
-    render_trace_tab,
+    render_technical_suite,
 )
 
 st.set_page_config(page_title="Demo Mobile Agent Hotel", layout="wide")
@@ -34,31 +29,18 @@ def main() -> None:
     simulation = st.session_state.get("simulation")
     snapshot = simulation.snapshot() if simulation is not None else None
 
-    tab_beranda, tab_guest, tab_staff, tab_it, tab_simulation, tab_autorun, tab_evaluation = st.tabs(
+    tab_suite_bisnis, tab_suite_teknis = st.tabs(
         [
-            "🏠 Beranda",
-            "🛎️ Portal Tamu",
-            "👔 Dashboard Staf",
-            "💻 Konsol IT",
-            "⚡ Lab Simulasi",
-            "🎯 Uji Skenario",
-            "📊 Evaluasi ML",
+            "👔 Mode Pure Bisnis (Operations & Executive Suite)",
+            "🛠️ Mode Teknikal (Engineering & Architecture Console)",
         ]
     )
-    with tab_beranda:
-        render_landing_page(model)
-    with tab_guest:
-        render_guest_portal(snapshot, simulation, model)
-    with tab_staff:
-        render_staff_portal(snapshot, simulation)
-    with tab_it:
-        render_trace_tab(snapshot, simulation)
-    with tab_simulation:
-        render_simulation_tab(snapshot, simulation)
-    with tab_autorun:
-        render_autorun_tab(model)
-    with tab_evaluation:
-        render_evaluation_tab(model)
+
+    with tab_suite_bisnis:
+        render_business_suite(snapshot, simulation, model)
+
+    with tab_suite_teknis:
+        render_technical_suite(snapshot, simulation, model)
 
 
 main()

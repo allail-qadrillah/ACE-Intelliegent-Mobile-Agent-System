@@ -24,7 +24,6 @@ def create_deck():
     CARD_BORDER = RGBColor(226, 232, 240)
     ACCENT_BLUE = RGBColor(37, 99, 235)
     GREEN = RGBColor(16, 185, 129)
-    RED = RGBColor(239, 68, 68)
 
     def set_bg(slide, color):
         bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, prs.slide_width, prs.slide_height)
@@ -34,6 +33,7 @@ def create_deck():
         return bg
 
     def add_header(slide, title_text, category_text="ACE - INTELLIGENT MOBILE AGENT SYSTEM"):
+        # Header banner
         cat_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.4), Inches(11.5), Inches(0.4))
         tf_c = cat_box.text_frame
         tf_c.word_wrap = True
@@ -66,6 +66,7 @@ def create_deck():
     s1 = prs.slides.add_slide(blank_layout)
     set_bg(s1, NAVY)
 
+    # Accent bar
     bar = s1.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(1.0), Inches(1.5), Inches(1.2), Inches(0.08))
     bar.fill.solid()
     bar.fill.fore_color.rgb = ORANGE
@@ -82,7 +83,7 @@ def create_deck():
     p0.font.color.rgb = WHITE
 
     p1 = tf1.add_paragraph()
-    p1.text = "Solusi Multi-Agent Enterprise: Otomasi Layanan Tamu, Perlindungan Pendapatan, & Migrasi State Agen"
+    p1.text = "Simulasi Multi-Agent Customer Service Hotel dengan Migrasi State Mobile Agent Antar-Node Logis"
     p1.font.size = Pt(18)
     p1.font.color.rgb = RGBColor(203, 213, 225)
     p1.space_before = Pt(14)
@@ -94,6 +95,7 @@ def create_deck():
     p2.font.color.rgb = ORANGE
     p2.space_before = Pt(20)
 
+    # Team Card on Title Slide
     team_card = add_card(s1, Inches(1.0), Inches(5.2), Inches(11.3), Inches(1.5), bg_color=RGBColor(33, 46, 70), border_color=ORANGE)
     tb_team = s1.shapes.add_textbox(Inches(1.2), Inches(5.3), Inches(10.9), Inches(1.3))
     tf_team = tb_team.text_frame
@@ -116,178 +118,113 @@ def create_deck():
     p_t2.space_before = Pt(6)
 
     # ==========================================
-    # SLIDE 2: Sisi Bisnis - Masalah Riil Operasional
+    # SLIDE 2: Latar Belakang & Masalah
     # ==========================================
     s2 = prs.slides.add_slide(blank_layout)
     set_bg(s2, LIGHT_BG)
-    add_header(s2, "Sisi Bisnis: Masalah Nyata di Operasional Hotel Tradisional", "PERSPEKTIF BISNIS & OPERASIONAL")
+    add_header(s2, "Latar Belakang: Tantangan Operasional Customer Service Hotel")
 
-    pain_points = [
-        ("⏳ Gesekan Koordinasi (Time Friction)", "Ketika AC rusak di malam hari, tamu harus menunggu 30-45 menit karena Front Desk harus koordinasi manual via telepon/intercom ke tim Housekeeping & Engineering yang sedang bertugas di lapangan."),
-        ("💥 Risiko Kamar Kotor (Double Complaint)", "Resepsionis melihat kamar kosong di sistem komputer, lalu langsung memindahkan tamu. Ternyata sprei masih kotor (DIRTY) karena status fisik belum diperbarui. Tamu komplain 2 kali!"),
-        ("💸 Kebocoran Pendapatan (Revenue Leakage)", "Karena panik menghadapi tamu yang marah di tengah malam, staf Front Office sering memberikan upgrade gratis ke kamar Deluxe/Suite tanpa otorisasi manajer, merugikan pendapatan hotel."),
-        ("📉 Kerusakan Reputasi (Online Reviews)", "Keterlambatan penanganan komplain langsung berujung ulasan bintang 1 di TripAdvisor & Google Maps, menurunkan angka okupansi dan tingkat pemesanan ulang (guest retention).")
+    # 3 Cards Problem
+    problems = [
+        ("Tantangan Integrasi Data", "Data Front Office (reservasi & tamu) terpisah secara logis dan fisik dari data Operations (housekeeping & kesiapan teknis kamar). Integrasi manual sering memicu delay dan salah kamar."),
+        ("Keterbatasan Pendekatan Statis", "Pada arsitektur agen tradisional, agen pusat harus meminta seluruh data database untuk diinspeksi ke node pusat, menimbulkan pemborosan bandwidth dan risiko kebocoran data sensitif."),
+        ("Solusi: Konsep Mobile Agent", "Memungkinkan agen cerdas (Mobile Investigator) berpindah lokasi eksekusi langsung ke node tempat data berada, menginspeksi secara lokal, dan hanya mengirimkan hasil akhir.")
     ]
 
-    for idx, (title, desc) in enumerate(pain_points):
-        col = idx % 2
-        row = idx // 2
-        x = Inches(0.8 + col * 6.0)
-        y = Inches(1.8 + row * 2.5)
-
-        add_card(s2, x, y, Inches(5.6), Inches(2.2), border_color=RED if idx in (1, 2) else CARD_BORDER)
-        tb = s2.shapes.add_textbox(x + Inches(0.2), y + Inches(0.15), Inches(5.2), Inches(1.9))
+    for idx, (title, desc) in enumerate(problems):
+        x = Inches(0.8 + idx * 4.0)
+        add_card(s2, x, Inches(1.8), Inches(3.7), Inches(4.8))
+        tb = s2.shapes.add_textbox(x + Inches(0.2), Inches(2.0), Inches(3.3), Inches(4.4))
         tf = tb.text_frame
         tf.word_wrap = True
-
+        
         p = tf.paragraphs[0]
-        p.text = title
-        p.font.size = Pt(15)
+        p.text = f"0{idx+1}"
+        p.font.size = Pt(28)
         p.font.bold = True
-        p.font.color.rgb = NAVY
+        p.font.color.rgb = ORANGE
+
+        p_title = tf.add_paragraph()
+        p_title.text = title
+        p_title.font.size = Pt(16)
+        p_title.font.bold = True
+        p_title.font.color.rgb = NAVY
+        p_title.space_before = Pt(10)
 
         p_desc = tf.add_paragraph()
         p_desc.text = desc
-        p_desc.font.size = Pt(12)
+        p_desc.font.size = Pt(13)
         p_desc.font.color.rgb = DARK_TEXT
-        p_desc.space_before = Pt(8)
+        p_desc.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 3: Business Value & ROI
+    # SLIDE 3: Paradigma Mobile vs Static Agent
     # ==========================================
     s3 = prs.slides.add_slide(blank_layout)
     set_bg(s3, LIGHT_BG)
-    add_header(s3, "Business Value & ROI: Dampak Finansial & Kepuasan Tamu", "NILAI TAMBAH ENTERPRISE")
+    add_header(s3, "Paradigma: Mobile Agent vs Static Agent")
 
-    # Left: 4 Pillars of Value
-    add_card(s3, Inches(0.8), Inches(1.8), Inches(6.0), Inches(5.0))
-    tb_val = s3.shapes.add_textbox(Inches(1.0), Inches(2.0), Inches(5.6), Inches(4.6))
-    tf_val = tb_val.text_frame
-    tf_val.word_wrap = True
-
-    p = tf_val.paragraphs[0]
-    p.text = "💎 4 Pilar Nilai Bisnis Sistem ACE"
-    p.font.size = Pt(18)
-    p.font.bold = True
-    p.font.color.rgb = NAVY
-
-    pillars = [
-        ("Resolusi Cepat 80% Kasus Rutin", "Kasus AC rusak (S01) selesai otomatis dalam < 1 menit. Mobile agent memverifikasi kamar bersih di Operations tanpa perlu telepon manual."),
-        ("Proteksi Pendapatan (Revenue Guardrail)", "Aturan bisnis (Policy) mengunci otomatis jika tamu minta upgrade gratis (S02) atau sengketa uang (S03). AI tidak bisa sembarangan menggratiskan kamar!"),
-        ("Efisiensi Tenaga Kerja & Lembur", "Menangani ribuan pertanyaan rutin (FAQ check-in/out, Wi-Fi, handuk) secara mandiri. Menghemat beban lembur shift malam."),
-        ("Kepuasan & Kepercayaan Tamu (CSAT)", "Tamu menerima penawaran resmi di HP, melihat kamar pengganti bersih & setara, lalu konfirmasi dengan 1 klik.")
-    ]
-
-    for title, desc in pillars:
-        p_t = tf_val.add_paragraph()
-        p_t.text = "• " + title + ": "
-        p_t.font.size = Pt(12)
-        p_t.font.bold = True
-        p_t.font.color.rgb = ORANGE
-        p_t.space_before = Pt(8)
-
-        run = p_t.add_run()
-        run.text = desc
-        run.font.bold = False
-        run.font.color.rgb = DARK_TEXT
-
-    # Right: KPI Comparison Table Card
-    add_card(s3, Inches(7.1), Inches(1.8), Inches(5.4), Inches(5.0), border_color=GREEN)
-    tb_kpi = s3.shapes.add_textbox(Inches(7.3), Inches(2.0), Inches(5.0), Inches(4.6))
-    tf_kpi = tb_kpi.text_frame
-    tf_kpi.word_wrap = True
-
-    p_kpi = tf_kpi.paragraphs[0]
-    p_kpi.text = "📈 Dampak Terhadap Indikator Kinerja (KPI)"
-    p_kpi.font.size = Pt(18)
-    p_kpi.font.bold = True
-    p_kpi.font.color.rgb = GREEN
-
-    kpis = [
-        ("Waktu Resolusi Komplain (MTTR)", "Sebelum: 30 - 45 Menit", "Setelah: < 1 Menit (Instan)"),
-        ("Beban Telepon Front Desk", "Sebelum: Sangat Tinggi (Sibuk)", "Setelah: Berkurang hingga 60%"),
-        ("Kepatuhan SOP & Pendapatan", "Sebelum: Rentan Human Error", "Setelah: 100% Patuh SOP Policy"),
-        ("Kepuasan Tamu (CSAT / NPS)", "Sebelum: Rawan Review Buruk", "Setelah: Meningkat & Tamu Nyaman")
-    ]
-
-    for metric, before, after in kpis:
-        p_m = tf_kpi.add_paragraph()
-        p_m.text = f"📊 {metric}"
-        p_m.font.size = Pt(13)
-        p_m.font.bold = True
-        p_m.font.color.rgb = NAVY
-        p_m.space_before = Pt(10)
-
-        p_b = tf_kpi.add_paragraph()
-        p_b.text = f"   ❌ {before}  ➔  ✅ {after}"
-        p_b.font.size = Pt(11)
-        p_b.font.color.rgb = DARK_TEXT
-        p_b.space_before = Pt(2)
-
-    # ==========================================
-    # SLIDE 4: Mengapa Mobile Agent?
-    # ==========================================
-    s4 = prs.slides.add_slide(blank_layout)
-    set_bg(s4, LIGHT_BG)
-    add_header(s4, "Mengapa Konsep 'Mobile Agent'? Perspektif Enterprise IT", "ARUS DATA & KEAMANAN SISTEM")
-
-    add_card(s4, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
-    tb_st = s4.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(5.0), Inches(4.4))
+    # 2 Comparison Columns
+    # Left: Static
+    add_card(s3, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
+    tb_st = s3.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(5.0), Inches(4.4))
     tf_st = tb_st.text_frame
     tf_st.word_wrap = True
     p = tf_st.paragraphs[0]
-    p.text = "🏢 Pendekatan Tradisional (Static Agent)"
-    p.font.size = Pt(18)
+    p.text = "🏢 Static Agent (Baseline)"
+    p.font.size = Pt(20)
     p.font.bold = True
     p.font.color.rgb = NAVY
 
     items_st = [
-        "Data ditarik melintasi jaringan dari Operations ke Front Office.",
-        "Membuka database operasional internal ke resepsionis (rawan privasi).",
-        "Transfer data mentah yang berulang dan boros bandwidth.",
-        "Ketergantungan tinggi pada stabilitas jaringan antar-gedung/resort.",
-        "0 Migrasi agen (hanya request-response biasa)."
+        "Agen investigator menetap di Front Office.",
+        "Mengirim batch RPC request 'INSPECT_CANDIDATES' ke Operations Agent.",
+        "Data ditarik melintasi jaringan/node.",
+        "0 Migrasi agen terjadi.",
+        "Hasil bisnis sama, tetapi bergantung pada transfer data bolak-balik."
     ]
     for item in items_st:
         p_i = tf_st.add_paragraph()
         p_i.text = "• " + item
-        p_i.font.size = Pt(12)
+        p_i.font.size = Pt(13)
         p_i.font.color.rgb = DARK_TEXT
         p_i.space_before = Pt(10)
 
-    add_card(s4, Inches(6.9), Inches(1.8), Inches(5.6), Inches(4.8), border_color=ORANGE)
-    tb_mb = s4.shapes.add_textbox(Inches(7.2), Inches(2.0), Inches(5.0), Inches(4.4))
+    # Right: Mobile
+    add_card(s3, Inches(6.9), Inches(1.8), Inches(5.6), Inches(4.8), border_color=ORANGE)
+    tb_mb = s3.shapes.add_textbox(Inches(7.2), Inches(2.0), Inches(5.0), Inches(4.4))
     tf_mb = tb_mb.text_frame
     tf_mb.word_wrap = True
     p = tf_mb.paragraphs[0]
-    p.text = "🚀 Pendekatan Proyek (Mobile Agent)"
-    p.font.size = Pt(18)
+    p.text = "🚀 Mobile Agent (Pendekatan Proyek)"
+    p.font.size = Pt(20)
     p.font.bold = True
     p.font.color.rgb = ORANGE
 
     items_mb = [
-        "Agen membawa state tugas dan bermigrasi ke tempat data berada.",
-        "Inspeksi dilakukan secara lokal di node Operations tanpa eksposur data mentah.",
-        "Hanya hasil akhir ('Kamar 103 Ready') yang dilaporkan kembali.",
-        "Jauh lebih hemat bandwidth (Checkpoint JSON kanonik hanya ~1-2 KB).",
-        "1 Migrasi sukses dengan kontinuitas ID 'MA-001' & integritas SHA-256."
+        "Agen Mobile Investigator mengepak state ke Checkpoint JSON kanonik.",
+        "Instance lama ditutup (Depart), instance baru lahir di node Operations (Arrive).",
+        "Inspeksi dilakukan secara lokal di node data Operations.",
+        "1 Migrasi sukses dengan kontinuitas ID ('MA-001').",
+        "Hanya hasil akhir yang dilaporkan kembali ke Front Office."
     ]
     for item in items_mb:
         p_i = tf_mb.add_paragraph()
         p_i.text = "• " + item
-        p_i.font.size = Pt(12)
+        p_i.font.size = Pt(13)
         p_i.font.color.rgb = DARK_TEXT
         p_i.space_before = Pt(10)
 
     # ==========================================
-    # SLIDE 5: Arsitektur 2 Node Logis & 7 Agen
+    # SLIDE 4: Arsitektur 2 Node Logis & 7 Agen
     # ==========================================
-    s5 = prs.slides.add_slide(blank_layout)
-    set_bg(s5, LIGHT_BG)
-    add_header(s5, "Arsitektur Sistem: Dua Node Logis & Spesialisasi Agen", "DESAIN ARSITEKTUR PERANGKAT LUNAK")
+    s4 = prs.slides.add_slide(blank_layout)
+    set_bg(s4, LIGHT_BG)
+    add_header(s4, "Arsitektur Sistem: Dua Node Logis & Spesialisasi Agen")
 
-    add_card(s5, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
-    tb_fo = s5.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(5.0), Inches(4.4))
+    # Node 1: Front Office
+    add_card(s4, Inches(0.8), Inches(1.8), Inches(5.6), Inches(4.8))
+    tb_fo = s4.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(5.0), Inches(4.4))
     tf_fo = tb_fo.text_frame
     tf_fo.word_wrap = True
     p = tf_fo.paragraphs[0]
@@ -303,10 +240,10 @@ def create_deck():
     p_sub.space_before = Pt(4)
 
     agents_fo = [
-        ("Scenario Scout", "Menerima pesan tamu & membentuk request terstruktur."),
-        ("Orchestrator", "Pusat koordinasi, triase policy/ML, & alur kasus."),
-        ("Reservation Agent", "Mencari kamar setara & commit perpindahan kamar."),
-        ("Billing Agent", "Membaca folio & kalkulasi tagihan kamar/minibar."),
+        ("Scenario Scout", "Menerima pesan tamu & menyusun request terstruktur."),
+        ("Orchestrator", "Pusat koordinasi, triase policy/ML, & manajemen kasus."),
+        ("Reservation Agent", "Mencari kandidat kamar & eksekusi commit mutasi kamar."),
+        ("Billing Agent", "Membaca folio tagihan & kalkulasi biaya minibar/kamar."),
         ("Concierge Agent", "Menjawab FAQ hotel (check-in, check-out, Wi-Fi).")
     ]
     for name, desc in agents_fo:
@@ -316,8 +253,9 @@ def create_deck():
         p_a.font.color.rgb = DARK_TEXT
         p_a.space_before = Pt(8)
 
-    add_card(s5, Inches(6.9), Inches(1.8), Inches(5.6), Inches(4.8))
-    tb_op = s5.shapes.add_textbox(Inches(7.2), Inches(2.0), Inches(5.0), Inches(4.4))
+    # Node 2: Operations
+    add_card(s4, Inches(6.9), Inches(1.8), Inches(5.6), Inches(4.8))
+    tb_op = s4.shapes.add_textbox(Inches(7.2), Inches(2.0), Inches(5.0), Inches(4.4))
     tf_op = tb_op.text_frame
     tf_op.word_wrap = True
     p = tf_op.paragraphs[0]
@@ -327,13 +265,13 @@ def create_deck():
     p.font.color.rgb = GREEN
 
     p_sub2 = tf_op.add_paragraph()
-    p_sub2.text = "Database In-Memory: Status Kesiapan Fisik Kamar & Tiket Petugas"
+    p_sub2.text = "Database In-Memory: Status Kesiapan Kamar & Tiket Petugas"
     p_sub2.font.size = Pt(11)
     p_sub2.font.color.rgb = MUTED_TEXT
     p_sub2.space_before = Pt(4)
 
     agents_op = [
-        ("Operations Agent", "Kelola kesiapan fisik kamar, blok maintenance, & tiket staf."),
+        ("Operations Agent", "Mengelola kesiapan fisik kamar, pemblokiran maintenance, & tiket staf."),
         ("Mobile Investigator (MA-001)", "Agen yang bermigrasi dari Front Office ke Operations untuk menginspeksi kesiapan kamar langsung di sumber data.")
     ]
     for name, desc in agents_op:
@@ -344,21 +282,21 @@ def create_deck():
         p_a.space_before = Pt(10)
 
     p_note = tf_op.add_paragraph()
-    p_note.text = "🔒 Hak Akses Data: Agen hanya berhak membaca data sesuai hak akses node aktif."
+    p_note.text = "🔒 Kontrol Akses: Agen tidak dapat mengakses data di luar kapabilitas node tempat ia aktif saat ini."
     p_note.font.size = Pt(11)
     p_note.font.bold = True
     p_note.font.color.rgb = ORANGE
     p_note.space_before = Pt(24)
 
     # ==========================================
-    # SLIDE 6: Protokol Migrasi & Integritas
+    # SLIDE 5: Protokol Migrasi & Integritas
     # ==========================================
-    s6 = prs.slides.add_slide(blank_layout)
-    set_bg(s6, LIGHT_BG)
-    add_header(s6, "Protokol Migrasi State Agen & Jaminan Keamanan SHA-256", "MEKANISME TEKNIS MIGRASI")
+    s5 = prs.slides.add_slide(blank_layout)
+    set_bg(s5, LIGHT_BG)
+    add_header(s5, "Protokol Migrasi State Agen & Jaminan Keamanan")
 
     stages = [
-        ("1. PREPARE", "Serialisasi state agen (tujuan, kandidat kamar, kriteria) menjadi Checkpoint JSON kanonik UTF-8. Hash SHA-256 digenerate."),
+        ("1. PREPARE", "Serialisasi state agen (goal, kandidat kamar, constraints) menjadi Checkpoint JSON kanonik UTF-8. Menghasilkan hash SHA-256."),
         ("2. DEPART", "Instance agen di node asal ditutup dan diarsipkan. Instance aktif = 0; agen hanya berada di jalur transit."),
         ("3. ARRIVE", "Instance baru dibuat di node tujuan dari checkpoint. Integritas hash SHA-256 & skema divalidasi sebelum aktivasi."),
         ("4. ROLLBACK", "Jika terjadi anomali (hash rusak, skema tidak cocok), mekanisme rollback memulihkan agen ke node asal secara aman.")
@@ -366,8 +304,8 @@ def create_deck():
 
     for idx, (title, desc) in enumerate(stages):
         x = Inches(0.8 + idx * 3.0)
-        add_card(s6, x, Inches(1.8), Inches(2.7), Inches(4.8))
-        tb = s6.shapes.add_textbox(x + Inches(0.15), Inches(2.0), Inches(2.4), Inches(4.4))
+        add_card(s5, x, Inches(1.8), Inches(2.7), Inches(4.8))
+        tb = s5.shapes.add_textbox(x + Inches(0.15), Inches(2.0), Inches(2.4), Inches(4.4))
         tf = tb.text_frame
         tf.word_wrap = True
 
@@ -384,22 +322,22 @@ def create_deck():
         p_desc.space_before = Pt(12)
 
     # ==========================================
-    # SLIDE 7: Pengalaman Multi-Stakeholder
+    # SLIDE 6: Pengalaman Multi-Stakeholder
     # ==========================================
-    s7 = prs.slides.add_slide(blank_layout)
-    set_bg(s7, LIGHT_BG)
-    add_header(s7, "Antarmuka Berbasis Peran (Multi-Stakeholder Experience)", "DESAIN USER EXPERIENCE")
+    s6 = prs.slides.add_slide(blank_layout)
+    set_bg(s6, LIGHT_BG)
+    add_header(s6, "Antarmuka Berbasis Peran (Multi-Stakeholder Experience)")
 
     stakeholders = [
-        ("🛎️ Tamu Hotel (Customer)", "Portal interaktif ramah pengguna:\n• Chat asisten AI hotel yang ramah\n• Kartu penawaran kamar baru (bersih & setara)\n• Tombol persetujuan tamu (Consent) langsung\n• Pilihan layanan cepat & ketik keluhan bebas"),
+        ("🛎️ Tamu Hotel (Customer)", "Portal interaktif ramah pengguna:\n• Chat asisten AI hotel\n• Kartu penawaran kamar baru (bersih & setara)\n• Tombol persetujuan tamu (Consent) langsung\n• Pilihan layanan cepat & pesan bebas"),
         ("👔 Staf Hotel (Operations)", "Dashboard operasional terpadu:\n• Ringkasan KPI tiket tugas & eskalasi\n• Inbox eskalasi kasus yang butuh staf\n• Tombol 'Ambil Alih' & resolusi catatan staf\n• Papan kerja tiket housekeeping/maintenance"),
         ("💻 Tim IT / DevOps", "Konsol observabilitas mendalam:\n• Pemantauan topologi agen & node\n• Verifikasi integritas hash SHA-256\n• Pengukuran payload bytes & latency\n• Unduh laporan audit log JSON lengkap")
     ]
 
     for idx, (title, desc) in enumerate(stakeholders):
         x = Inches(0.8 + idx * 4.0)
-        add_card(s7, x, Inches(1.8), Inches(3.7), Inches(4.8))
-        tb = s7.shapes.add_textbox(x + Inches(0.2), Inches(2.0), Inches(3.3), Inches(4.4))
+        add_card(s6, x, Inches(1.8), Inches(3.7), Inches(4.8))
+        tb = s6.shapes.add_textbox(x + Inches(0.2), Inches(2.0), Inches(3.3), Inches(4.4))
         tf = tb.text_frame
         tf.word_wrap = True
 
@@ -416,11 +354,11 @@ def create_deck():
         p_desc.space_before = Pt(14)
 
     # ==========================================
-    # SLIDE 8: Skenario Pengujian (S01 - S09)
+    # SLIDE 7: Skenario Pengujian (S01 - S09)
     # ==========================================
-    s8 = prs.slides.add_slide(blank_layout)
-    set_bg(s8, LIGHT_BG)
-    add_header(s8, "9 Skenario Pengujian Realistis & Otomatisasi 1-Klik", "CAKUPAN KASUS BISNIS")
+    s7 = prs.slides.add_slide(blank_layout)
+    set_bg(s7, LIGHT_BG)
+    add_header(s7, "9 Skenario Pengujian Realistis & Otomatisasi 1-Klik")
 
     scenarios_summary = [
         ("S01: AC Rusak — Kamar Setara", "Migrasi Mobile Investigator -> Temukan R103 ready -> Proposal -> Persetujuan Tamu -> Selesai Digital."),
@@ -440,8 +378,8 @@ def create_deck():
         x = Inches(0.8 + col * 4.0)
         y = Inches(1.8 + row * 1.6)
 
-        add_card(s8, x, y, Inches(3.7), Inches(1.4))
-        tb = s8.shapes.add_textbox(x + Inches(0.15), y + Inches(0.1), Inches(3.4), Inches(1.2))
+        add_card(s7, x, y, Inches(3.7), Inches(1.4))
+        tb = s7.shapes.add_textbox(x + Inches(0.15), y + Inches(0.1), Inches(3.4), Inches(1.2))
         tf = tb.text_frame
         tf.word_wrap = True
 
@@ -458,14 +396,14 @@ def create_deck():
         p_d.space_before = Pt(3)
 
     # ==========================================
-    # SLIDE 9: Hasil Evaluasi & Kesetaraan
+    # SLIDE 8: Hasil Evaluasi & Kesetaraan
     # ==========================================
-    s9 = prs.slides.add_slide(blank_layout)
-    set_bg(s9, LIGHT_BG)
-    add_header(s9, "Evaluasi & Benchmark: Kesetaraan Hasil Bisnis", "VERIFIKASI & PENGUJIAN ILMIAH")
+    s8 = prs.slides.add_slide(blank_layout)
+    set_bg(s8, LIGHT_BG)
+    add_header(s8, "Evaluasi & Benchmark: Kesetaraan Hasil Bisnis")
 
-    add_card(s9, Inches(0.8), Inches(1.8), Inches(11.7), Inches(4.8))
-    tb_ev = s9.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(11.1), Inches(4.4))
+    add_card(s8, Inches(0.8), Inches(1.8), Inches(11.7), Inches(4.8))
+    tb_ev = s8.shapes.add_textbox(Inches(1.1), Inches(2.0), Inches(11.1), Inches(4.4))
     tf_ev = tb_ev.text_frame
     tf_ev.word_wrap = True
 
@@ -490,57 +428,53 @@ def create_deck():
         p_t.font.color.rgb = ORANGE
         p_t.space_before = Pt(12)
 
+        # append description
         run = p_t.add_run()
         run.text = desc
         run.font.bold = False
         run.font.color.rgb = DARK_TEXT
 
     # ==========================================
-    # SLIDE 10: Kesimpulan & Penutup
+    # SLIDE 9: Kesimpulan & Penutup
     # ==========================================
-    s10 = prs.slides.add_slide(blank_layout)
-    set_bg(s10, NAVY)
+    s9 = prs.slides.add_slide(blank_layout)
+    set_bg(s9, NAVY)
 
-    tb10 = s10.shapes.add_textbox(Inches(1.5), Inches(1.8), Inches(10.3), Inches(4.0))
-    tf10 = tb10.text_frame
-    tf10.word_wrap = True
+    tb9 = s9.shapes.add_textbox(Inches(1.5), Inches(1.8), Inches(10.3), Inches(4.0))
+    tf9 = tb9.text_frame
+    tf9.word_wrap = True
 
-    p0 = tf10.paragraphs[0]
+    p0 = tf9.paragraphs[0]
     p0.text = "Kesimpulan & Nilai Tambah Enterprise"
     p0.font.size = Pt(32)
     p0.font.bold = True
     p0.font.color.rgb = WHITE
 
     points = [
-        "Membuktikan kelayakan implementasi konsep Mobile Agent pada domain operasional perhotelan.",
-        "Mengurangi waktu penanganan keluhan tamu dari 30-45 menit menjadi < 1 menit secara otonom.",
-        "Mencegah kebocoran pendapatan dengan jaminan aturan bisnis mutlak (Policy Guardrails).",
+        "Membuktikan kelayakan implementasi konsep Mobile Agent pada domain perhotelan modern.",
+        "Menjaga desentralisasi data tanpa mengorbankan kecepatan penyelesaian keluhan tamu.",
         "Menyediakan antarmuka intuitif untuk 3 stakeholder utama: Tamu, Staf Hotel, dan Tim IT.",
         "Sistem siap didemonstrasikan secara langsung (live interactive demo) maupun otomatis (1-click)."
     ]
 
     for pt in points:
-        p = tf10.add_paragraph()
+        p = tf9.add_paragraph()
         p.text = "• " + pt
-        p.font.size = Pt(15)
+        p.font.size = Pt(16)
         p.font.color.rgb = RGBColor(226, 232, 240)
-        p.space_before = Pt(12)
+        p.space_before = Pt(14)
 
-    p_close = tf10.add_paragraph()
+    p_close = tf9.add_paragraph()
     p_close.text = "Terima Kasih — Kelompok 5 (Agent Enterprise)"
     p_close.font.size = Pt(20)
     p_close.font.bold = True
     p_close.font.color.rgb = ORANGE
-    p_close.space_before = Pt(24)
+    p_close.space_before = Pt(28)
 
     # Save presentation
-    output_path = "presentasi_ace_mobile_agent_v2.pptx"
-    try:
-        prs.save("presentasi_ace_mobile_agent.pptx")
-        print(f"Presentation saved to {os.path.abspath('presentasi_ace_mobile_agent.pptx')}")
-    except PermissionError:
-        prs.save(output_path)
-        print(f"File utama sedang dibuka oleh aplikasi lain. Berhasil disimpan ke: {os.path.abspath(output_path)}")
+    output_path = "presentasi_ace_mobile_agent.pptx"
+    prs.save(output_path)
+    print(f"Presentation saved to {os.path.abspath(output_path)}")
 
 if __name__ == "__main__":
     create_deck()
