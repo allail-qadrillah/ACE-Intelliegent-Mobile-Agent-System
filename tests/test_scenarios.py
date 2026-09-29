@@ -300,3 +300,25 @@ def test_s09_answers_wifi_faq(run_scenario):
     assert case.status == "DIGITAL_COMPLETED"
     assert "wi-fi" in case.evidence["faq"]["answer"].lower() or "wifi" in case.evidence["faq"]["answer"].lower()
 
+
+def test_s01_guest_acceptance_advances_to_completion(make_sim):
+    sim = make_sim("S01", "mobile")
+    sim.start_scenario()
+    sim.run_until_pause()
+    assert sim.case.status == "WAITING_GUEST"
+    assert sim.case.proposed_room_id == "R103"
+
+    # Guest accepts
+    sim.submit_guest_choice(True, actor="GUEST")
+    assert sim.has_pending_work() is True
+
+    # Stepping advances through processing to digital completion
+    sim.step()
+    assert sim.case.status == "PROCESSING"
+
+    sim.run_until_pause()
+    assert sim.case.status == "DIGITAL_COMPLETED"
+    assert sim.case.assigned_room_id == "R103"
+    assert sim.front_office.get_reservation("RES001")["reservation"]["room_id"] == "R103"
+
+

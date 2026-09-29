@@ -520,6 +520,15 @@ def get_presenter_telemetry(
             headline = "Tamu Memilih Tetap di Kamar Asal (Kasus Ditutup)"
             talking_point = "Tamu menolak opsi kamar pengganti. Sistem mencatat keputusan tamu dan menutup alur otomatis."
 
+        elif status == "PROCESSING" and case and case.get("consent"):
+            proposed = case.get("proposed_room_id", "R103")
+            agent = "🛏️ Reservation Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Persetujuan Diterima — Finalisasi Kunci"
+            headline = f"Tamu Menyetujui Pindah ke {proposed}. Sistem Mengunci Transaksi Database."
+            talking_point = "Persetujuan tamu telah tercatat! Sistem melakukan sinkronisasi database kamar dan mengalokasikan kunci kamar secara atomik."
+
         elif status == "WAITING_GUEST":
             proposed = case.get("proposed_room_id", "R103")
             agent = "🛎️ Layanan Tamu (Persetujuan Tamu)"
@@ -809,11 +818,14 @@ def render_universal_action_bar(
             with col_act1:
                 if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
                     simulation.submit_guest_choice(True, actor="GUEST")
-                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}!", icon="🛎️")
+                    simulation.step()
+                    st.session_state["autoplay"] = True
+                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}! Agen sedang memproses perpindahan...", icon="🛎️")
                     st.rerun()
             with col_act2:
                 if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
                     simulation.submit_guest_choice(False, actor="GUEST")
+                    st.session_state["autoplay"] = False
                     st.toast("❌ Tamu menolak tawaran kamar pengganti.", icon="🛎️")
                     st.rerun()
             with col_act3:
@@ -1286,11 +1298,16 @@ def render_simulation_tab(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(True, actor="GUEST")
+                simulation.step()
+                st.session_state["autoplay"] = True
+                st.toast(f"Tamu setuju pindah ke {case['proposed_room_id']}")
                 st.rerun()
             if guest_columns[1].button(
                 "Tamu: Tolak perpindahan", key="guest_decline", use_container_width=True
             ):
                 simulation.submit_guest_choice(False, actor="GUEST")
+                st.session_state["autoplay"] = False
+                st.toast("Tamu menolak perpindahan")
                 st.rerun()
 
     # Panel peran: staf
@@ -1847,6 +1864,9 @@ def render_guest_portal(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(True, actor="GUEST")
+                simulation.step()
+                st.session_state["autoplay"] = True
+                st.toast(f"✅ Anda telah menyetujui pindah ke kamar {case.get('proposed_room_id')}!", icon="🛎️")
                 st.rerun()
             if b_cols[1].button(
                 "❌ Tolak & Tetap di Kamar Ini",
@@ -1854,6 +1874,8 @@ def render_guest_portal(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(False, actor="GUEST")
+                st.session_state["autoplay"] = False
+                st.toast("❌ Anda menolak tawaran kamar pengganti.", icon="🛎️")
                 st.rerun()
 
     elif status == "WAITING_HUMAN":
