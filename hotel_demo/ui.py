@@ -1600,6 +1600,241 @@ def render_staff_portal(
         st.info("Belum ada tiket pekerjaan fisik yang dibuat.")
 
 
+def render_visual_node_map(snapshot: Optional[Dict[str, Any]]) -> None:
+    """Renders an intuitive 2D visual map showing the two departments and agent state."""
+    st.markdown("### 🗺️ Peta Pergerakan Agen: Lobi vs Operasional")
+    st.caption("Memvisualisasikan secara nyata bagaimana agen berpindah antar-departemen hotel untuk memeriksa kamar:")
+
+    is_transit = False
+    active_loc = "FRONT_OFFICE"
+    findings_text = "Menunggu pemeriksaan fisik..."
+
+    if snapshot is not None:
+        case = snapshot.get("case")
+        migration = snapshot.get("migration")
+        mig_stage = migration.get("stage") if migration else None
+
+        if mig_stage in ("INITIATED", "PREPARED", "DEPARTED"):
+            is_transit = True
+            active_loc = "TRANSIT"
+        elif mig_stage == "ARRIVED" or (case and case.get("inspection_results")):
+            active_loc = "OPERATIONS"
+
+        if case and case.get("inspection_results"):
+            findings = []
+            for r in case["inspection_results"]:
+                status_icon = "❌" if "DIRTY" in r.get("reason_codes", []) else "✨"
+                findings.append(f"{status_icon} Kamar {r['room_id']}: {','.join(r['reason_codes'])}")
+            findings_text = " | ".join(findings)
+
+    fo_border = "border: 2px solid #3B82F6; background: #EFF6FF;" if active_loc == "FRONT_OFFICE" else "border: 1px solid #CBD5E1; background: #F8FAFC;"
+    fo_badge = "🟢 AGEN AKTIF DI SINI" if active_loc == "FRONT_OFFICE" else "⚪ Standby"
+
+    op_border = "border: 2px solid #10B981; background: #ECFDF5;" if active_loc == "OPERATIONS" else "border: 1px solid #CBD5E1; background: #F8FAFC;"
+    op_badge = "🟢 AGEN MEMERIKSA FISIK" if active_loc == "OPERATIONS" else "⚪ Standby"
+
+    transit_badge = "✈️ 🧳 KOPER TRANSIT (SHA-256 Validated)" if is_transit else "── Jalur Komunikasi Antar-Departemen ──"
+    transit_color = "#EA580C" if is_transit else "#94A3B8"
+
+    col_fo, col_transit, col_op = st.columns([5, 2, 5])
+
+    with col_fo:
+        st.markdown(
+            f"""
+            <div style="{fo_border} padding: 14px; border-radius: 10px; min-height: 140px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="color: #1E3A8A; font-size: 1.05rem;">🏢 Lobi & Meja Depan</strong>
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #2563EB;">{fo_badge}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">
+                    • <strong>Database:</strong> Data Tamu, Reservasi, Folio, FAQ<br>
+                    • <strong>Agen:</strong> Scenario Scout, Orchestrator, Concierge<br>
+                    • <strong>Tugas:</strong> Menerima komplain & mengajukan proposal kamar
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col_transit:
+        st.markdown(
+            f"""
+            <div style="text-align: center; padding-top: 35px; color: {transit_color}; font-weight: bold; font-size: 0.8rem;">
+                {transit_badge}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col_op:
+        st.markdown(
+            f"""
+            <div style="{op_border} padding: 14px; border-radius: 10px; min-height: 140px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="color: #065F46; font-size: 1.05rem;">🧹 Operasional & Gudang</strong>
+                    <span style="font-size: 0.75rem; font-weight: bold; color: #059669;">{op_badge}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">
+                    • <strong>Database:</strong> Status Fisik Kamar (Bersih/Kotor) & Tiket<br>
+                    • <strong>Agen:</strong> Mobile Investigator (MA-001)<br>
+                    • <strong>Temuan Fisik:</strong> <span style="color: #0F172A; font-weight: 500;">{findings_text}</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_comprehension_tab() -> None:
+    """Dedicated comprehension suite with storyboards, analogies, comparisons, and quiz."""
+    st.markdown("## 📖 Panduan Pemahaman Konsep & Cara Kerja")
+    st.caption(
+        "Pelajari bagaimana kecerdasan Mobile Agent bekerja di perhotelan dengan ilustrasi, "
+        "analogi nyata, komparasi bisnis, dan kuis interaktif."
+    )
+
+    st.divider()
+
+    # Section 1: Storyboard Komik Alur Kasus
+    st.markdown("### 🎨 Komik Alur Kasus: Perjalanan 1 Menit Masalah Pak Budi")
+    st.caption("Bagaimana keluhan AC bocor di kamar 101 diselesaikan tanpa antre di meja depan:")
+
+    panels = [
+        ("1. Masalah Jam 01:00 Pagi", "Pak Budi di Kamar 101 mengeluh AC bocor dan berisik. Pak Budi mengirim pesan komplain lewat ponselnya."),
+        ("2. AI Menganalisis Keluhan", "Asisten AI membaca keluhan, memeriksa jatah kamar pengganti setara (Standard), dan menyiapkan proses verifikasi."),
+        ("3. Mengemas Koper State", "Agen mengemas koper data kasus (tujuan, kandidat kamar) dan menyegelnya secara digital dengan hash SHA-256."),
+        ("4. Cek Fisik di Housekeeping", "Agen tiba di database operasional. Menemukan R102 masih kotor (DIRTY) sehingga menolaknya, lalu memilih R103 yang bersih."),
+        ("5. Persetujuan di HP Tamu", "HP Pak Budi berbunyi: 'Kamar R103 bersih siap huni. Apakah Anda setuju pindah?'. Pak Budi klik [Setuju Pindah]."),
+        ("6. Kunci Kamar Aktif!", "Reservasi resmi berpindah ke R103. Pak Budi tidur nyenyak, hotel terbebas dari ulasan bintang 1!")
+    ]
+
+    cols_p1 = st.columns(3)
+    for idx in range(3):
+        title, text = panels[idx]
+        with cols_p1[idx]:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.write(text)
+
+    cols_p2 = st.columns(3)
+    for idx in range(3, 6):
+        title, text = panels[idx]
+        with cols_p2[idx - 3]:
+            with st.container(border=True):
+                st.markdown(f"**{title}**")
+                st.write(text)
+
+    st.divider()
+
+    # Section 2: Kamus Analogi Kehidupan Nyata
+    st.markdown("### 💡 Kamus Istilah dengan Analogi Dunia Nyata")
+    st.caption("Pahami konsep teknis melalui perumpamaan sehari-hari yang mudah diingat:")
+
+    an1, an2 = st.columns(2)
+    with an1:
+        with st.container(border=True):
+            st.markdown("#### 🧳 Mobile Agent (State Migration)")
+            st.markdown(
+                """
+                - **Istilah Teknis:** Agen berpindah node membawa koper state.
+                - **Analogi Nyata:** Seperti **auditor pajak yang datang langsung membawa tas berkas ke pabrik**. Daripada meminta pabrik mengirimkan seluruh truk dokumen ke kantor lobi, auditor datang langsung mengecek ke gudang.
+                - **Keuntungan Bisnis:** Menghemat kuota jaringan dan menjaga rahasia data internal operasional tetap aman di tempatnya.
+                """
+            )
+        with st.container(border=True):
+            st.markdown("#### 🛡️ Policy Guardrail (Satpam Kebijakan)")
+            st.markdown(
+                """
+                - **Istilah Teknis:** Aturan deterministik mandatory yang mengunci AI.
+                - **Analogi Nyata:** Seperti **satpam brankas bank**. Meskipun nasabah berteriak meminta uang lebih, satpam tidak akan membuka brankas tanpa izin tertulis dari manajer.
+                - **Keuntungan Bisnis:** Melindungi hotel dari tamu nakal yang menuntut kamar mewah gratis (anti-bocor biaya).
+                """
+            )
+
+    with an2:
+        with st.container(border=True):
+            st.markdown("#### 📜 Checkpoint & Segel SHA-256")
+            st.markdown(
+                """
+                - **Istilah Teknis:** Serialisasi JSON kanonik terverifikasi hash.
+                - **Analogi Nyata:** Seperti **surat resmi dengan cap lilin kerajaan**. Jika di tengah jalan ada yang membuka atau mengubah isinya, cap lilinnya rusak dan surat langsung ditolak.
+                - **Keuntungan Bisnis:** Menjamin data kamar tidak dimanipulasi atau rusak saat berpindah antar sistem.
+                """
+            )
+        with st.container(border=True):
+            st.markdown("#### ⚡ Idempotency (Anti-Duplikasi Transaksi)")
+            st.markdown(
+                """
+                - **Istilah Teknis:** Eksekusi berulang menghasilkan efek tunggal.
+                - **Analogi Nyata:** Seperti **tombol saklar lampu otomatis**. Ditekan 1 kali atau ditekan 10 kali, lampu tetap menyala (tidak meledak atau dobel transaksi).
+                - **Keuntungan Bisnis:** Mencegah mutasi kamar dobel saat tamu menekan tombol persetujuan berkali-kali karena sinyal HP lambat.
+                """
+            )
+
+    st.divider()
+
+    # Section 3: Perbandingan Tradisional vs ACE
+    st.markdown("### ⚖️ Mengapa Sistem Ini Unggul: Tradisional vs ACE Mobile Agent")
+    comp_col1, comp_col2 = st.columns(2)
+    with comp_col1:
+        with st.container(border=True):
+            st.markdown("#### ❌ Sistem Tradisional (Telepon / API Manual)")
+            st.markdown(
+                """
+                - **Waktu Penanganan:** 35 – 45 Menit (Telepon berulang-ulang ke berbagai bagian).
+                - **Risiko Kamar Kotor:** Tinggi (Resepsionis tidak tahu fisik kamar di lantai atas).
+                - **Risiko Pemerasan Tamu:** Staf panik memberikan upgrade Deluxe gratis tanpa izin.
+                - **Beban Staf:** Resepsionis sibuk mengangkat telepon keluhan alih-alih melayani tamu di lobi.
+                """
+            )
+    with comp_col2:
+        with st.container(border=True):
+            st.markdown("#### ✅ Sistem ACE (Mobile Agent Cerdas)")
+            st.markdown(
+                """
+                - **Waktu Penanganan:** **< 1 Menit** (Otomatis langsung di HP tamu).
+                - **Risiko Kamar Kotor:** **0% (Zero Double-Complaint)** karena diverifikasi fisik ke DB Housekeeping.
+                - **Proteksi Finansial:** **100% Terkunci** oleh Policy Guardrail.
+                - **Produktivitas Staf:** Staf fokus melayani tamu VIP, operasional rutin ditangani AI.
+                """
+            )
+
+    st.divider()
+
+    # Section 4: Kuis Mini Interaktif 30-Detik
+    st.markdown("### 🎯 Kuis Mini 30-Detik: Uji Pemahaman Anda!")
+    st.caption("Coba jawab dua skenario nyata di bawah ini untuk melihat bagaimana sistem berpikir:")
+
+    q1_ans = st.radio(
+        "1. Seorang tamu komplain AC rusak jam 2 pagi dan menuntut pindah gratis ke kamar Presidential Suite (Rp3 Juta). Apa yang akan dilakukan sistem ACE?",
+        options=[
+            "Pilih jawaban...",
+            "A. Langsung berikan kamar Suite demi memuaskan tamu.",
+            "B. Kunci otomatis (Policy Guardrail) dan eskalasi ke Manajer Manusia!",
+        ],
+        key="quiz_q1",
+    )
+    if q1_ans.startswith("B"):
+        st.success("🎉 TEPAT SEKALI! Sistem ACE memiliki Policy Guardrail untuk mencegah kebocoran biaya kamar mewah liar tanpa persetujuan manajer.")
+    elif q1_ans.startswith("A"):
+        st.error("❌ Kurang tepat. Memberikan kamar mewah tanpa izin menyebabkan kerugian finansial hotel!")
+
+    st.write("")
+    q2_ans = st.radio(
+        "2. Di sistem Front Office kamar R102 terdata kosong, tetapi di database Housekeeping statusnya masih 'DIRTY' (belum dicuci). Apa yang dilakukan Mobile Investigator?",
+        options=[
+            "Pilih jawaban...",
+            "A. Tetap tawarkan R102 ke tamu karena di Front Office tercatat kosong.",
+            "B. Otomatis eliminasi R102 dan pilih kamar R103 yang terbukti bersih!",
+        ],
+        key="quiz_q2",
+    )
+    if q2_ans.startswith("B"):
+        st.success("🎉 TEPAT SEKALI! Inilah keunggulan Mobile Agent: memverifikasi kondisi fisik lokal agar tidak terjadi Double Complaint!")
+    elif q2_ans.startswith("A"):
+        st.error("❌ Kurang tepat. Memindahkan tamu ke kamar kotor akan membuat tamu komplain dua kali dan marah besar!")
+
+
 def render_executive_dashboard(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any = None
 ) -> None:
@@ -1696,6 +1931,11 @@ def render_executive_dashboard(
                 - **Kepuasan Instan:** Tamu menerima proposal di HP dan menyetujui dengan 1 klik; status kamar berpindah seketika.
                 """
             )
+
+    st.divider()
+
+    # Visual Node Map (Interactive 2D Floorplan)
+    render_visual_node_map(snapshot)
 
     st.divider()
 
