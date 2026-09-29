@@ -742,9 +742,6 @@ def render_presenter_hud(
         st.markdown(
             f"""
             <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 6px; padding: 10px 14px; margin-top: 10px;">
-                <div style="font-size: 0.75rem; font-weight: bold; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px;">
-                    💡 Contekan Ucapan Presenter (Bisa Dibaca Langsung ke Dosen / Penguji):
-                </div>
                 <div style="font-size: 0.95rem; color: #78350F; margin-top: 4px; line-height: 1.5; font-style: italic;">
                     “{telemetry['talking_point']}”
                 </div>
