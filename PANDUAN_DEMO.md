@@ -114,7 +114,7 @@ Untuk menjalankan banyak skenario secara otomatis dan melihat ringkasan hasil. P
 
 ### 📖 Cara Kerja & Analogi Nyata
 
-Gunakan setelah demo bisnis untuk menjelaskan Mobile Agent dengan komik storyboard, analogi, kamus istilah, dan kuis singkat.
+Gunakan setelah demo bisnis untuk menjelaskan Mobile Agent dengan komik storyboard, analogi, dan kamus istilah.
 
 ### 🛠️ Mode Pengembang (Khusus IT)
 

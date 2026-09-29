@@ -81,11 +81,10 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
    - **Komik Storyboard 6 Panel:** Menjelaskan perjalanan koper agen secara visual ramah awam.
    - **Kamus Analogi Dunia Nyata:** Konsep teknis (Mobile Agent, State Bag SHA-256, Policy Guardrail, Idempotency) dianalogikan dengan Auditor Koper Bersegel, Segel Lilin Kerajaan, Satpam Brankas Hotel, dan Sakelar Lampu Otomatis.
    - **Tabel Kamus Istilah:** Padanan kata antara istilah teknis IT vs istilah operasional hotel.
-   - **Kuis Interaktif 30 Detik:** 3 pertanyaan interaktif berbobot dengan evaluasi skor instan untuk menguji pemahaman audiens.
 
 ### B. Struktur Tab Navigasi:
 1. **`🏨 Dasbor Eksekutif & Cerita Kasus`** — Pemilihan skenario 1-klik, Peta Pergerakan Agen 2D, Live Stepper alur kasus, metrik efisiensi, dan kalkulator ROI.
-2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, Kamus Istilah, dan Kuis Interaktif 30 Detik.
+2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, dan Kamus Istilah.
 3. **`🛎️ HP Tamu (Layanan Tamu)`** — Simulasi tampilan smartphone tamu, percakapan agen interaktif, dan kartu persetujuan pindah kamar.
 4. **`👔 Meja Kerja Staf Hotel`** — Antrean kasus eskalasi manajer (approval gate) dan papan tiket kerja fisik (Housekeeping/Maintenance).
 5. **`🎬 Uji Seluruh Skenario`** — Eksekusi batch seluruh skenario (Autorun) dengan ringkasan status kelulusan.

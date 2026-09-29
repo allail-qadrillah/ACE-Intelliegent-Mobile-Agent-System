@@ -2108,7 +2108,7 @@ def render_comprehension_tab() -> None:
     st.markdown("## 📖 Panduan Pemahaman Konsep & Cara Kerja")
     st.caption(
         "Pelajari bagaimana kecerdasan Mobile Agent bekerja di perhotelan dengan ilustrasi, "
-        "analogi nyata, komparasi bisnis, dan kuis interaktif."
+        "analogi nyata, dan komparasi bisnis."
     )
 
     st.divider()
@@ -2218,39 +2218,6 @@ def render_comprehension_tab() -> None:
             )
 
     st.divider()
-
-    # Section 4: Kuis Mini Interaktif 30-Detik
-    st.markdown("### 🎯 Kuis Mini 30-Detik: Uji Pemahaman Anda!")
-    st.caption("Coba jawab dua skenario nyata di bawah ini untuk melihat bagaimana sistem berpikir:")
-
-    q1_ans = st.radio(
-        "1. Seorang tamu komplain AC rusak jam 2 pagi dan menuntut pindah gratis ke kamar Presidential Suite (Rp3 Juta). Apa yang akan dilakukan sistem ACE?",
-        options=[
-            "Pilih jawaban...",
-            "A. Langsung berikan kamar Suite demi memuaskan tamu.",
-            "B. Kunci otomatis (Policy Guardrail) dan eskalasi ke Manajer Manusia!",
-        ],
-        key="quiz_q1",
-    )
-    if q1_ans.startswith("B"):
-        st.success("🎉 TEPAT SEKALI! Sistem ACE memiliki Policy Guardrail untuk mencegah kebocoran biaya kamar mewah liar tanpa persetujuan manajer.")
-    elif q1_ans.startswith("A"):
-        st.error("❌ Kurang tepat. Memberikan kamar mewah tanpa izin menyebabkan kerugian finansial hotel!")
-
-    st.write("")
-    q2_ans = st.radio(
-        "2. Di sistem Front Office kamar R102 terdata kosong, tetapi di database Housekeeping statusnya masih 'DIRTY' (belum dicuci). Apa yang dilakukan Mobile Investigator?",
-        options=[
-            "Pilih jawaban...",
-            "A. Tetap tawarkan R102 ke tamu karena di Front Office tercatat kosong.",
-            "B. Otomatis eliminasi R102 dan pilih kamar R103 yang terbukti bersih!",
-        ],
-        key="quiz_q2",
-    )
-    if q2_ans.startswith("B"):
-        st.success("🎉 TEPAT SEKALI! Inilah keunggulan Mobile Agent: memverifikasi kondisi fisik lokal agar tidak terjadi Double Complaint!")
-    elif q2_ans.startswith("A"):
-        st.error("❌ Kurang tepat. Memindahkan tamu ke kamar kotor akan membuat tamu komplain dua kali dan marah besar!")
 
 
 def render_executive_dashboard(
