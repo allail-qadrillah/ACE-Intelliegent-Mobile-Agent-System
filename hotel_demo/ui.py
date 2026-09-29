@@ -184,22 +184,22 @@ def render_landing_page(model: Any) -> None:
         (
             "📋",
             "1. Pilih Skenario",
-            "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S06.",
+            "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S09.",
         ),
         (
             "🔄",
             "2. Jalankan Simulasi",
-            'Tekan **"Langkah Berikutnya"** di tab Simulasi untuk maju step-by-step.',
+            'Gunakan spanduk **Presenter** di atas untuk **Putar** atau maju satu langkah.',
         ),
         (
             "🔍",
             "3. Lihat Jejak",
-            'Buka tab **"Jejak & State"** untuk melihat pesan, event, dan checkpoint migrasi.',
+            'Buka **Mode Pengembang** untuk melihat Lab Step, audit event, dan checkpoint migrasi.',
         ),
         (
             "📊",
             "4. Evaluasi",
-            'Buka tab **"Evaluasi"** dan klik **"Jalankan Perbandingan"** untuk membandingkan Mobile vs Static.',
+            'Buka **Mode Pengembang → Evaluasi Ilmiah & ML** untuk membandingkan Mobile vs Static.',
         ),
     ]
 
@@ -218,7 +218,7 @@ def render_landing_page(model: Any) -> None:
     st.divider()
 
     # ── 6 Skenario ───────────────────────────────────────────────────────
-    st.markdown("## 🎬 6 Skenario Demo")
+    st.markdown("## 🎬 9 Skenario Demo")
     st.caption(
         "Klik tombol di sidebar kiri untuk memulai skenario, atau pilih mode agen terlebih dahulu."
     )
@@ -340,19 +340,6 @@ def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
     st.session_state["autoplay"] = False
 
 
-def _submit_guest_choice(simulation: Simulation, accept: bool) -> None:
-    """Kirim keputusan tamu lalu lanjutkan alur.
-
-    ``submit_guest_choice(True)`` hanya mengantre pesan GUEST_CONSENT; status kasus
-    tetap WAITING_GUEST sampai Orchestrator memprosesnya. Tanpa langkah ini tombol
-    Putar/Maju tetap terkunci dan kartu persetujuan muncul lagi (demo macet).
-    """
-    result = simulation.submit_guest_choice(accept, actor="GUEST")
-    if result.get("ok") and result.get("accepted"):
-        simulation.step()  # Orchestrator memproses consent → status PROCESSING
-        st.session_state["autoplay"] = True  # lanjutkan recheck & commit otomatis
-
-
 def render_story_cards(model: Any) -> None:
     """Renders 4 interactive story scenario cards for quick one-click demo."""
     st.markdown("### 🎬 Pilih Skenario Cerita Demo Interaktif")
@@ -375,15 +362,15 @@ def render_story_cards(model: Any) -> None:
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 🧹 Cerita 3: Kamar Kotor Ditolak (Verifikasi Database)")
+            st.markdown("#### 💰 Cerita 3: Sengketa Tagihan Minibar (Eskalasi)")
             st.markdown(
                 """
-                - **Tamu:** Mas Kevin (Kamar 101)
-                - **Situasi:** Komplain fasilitas. Kamar pengganti di front office terdata kosong.
-                - **Kecerdasan Agen:** Memeriksa DB Housekeeping fisik, mendeteksi R102 masih kotor (DIRTY), otomatis menolaknya dan memilih R103.
+                - **Tamu:** Tamu Demo (Kamar 101)
+                - **Situasi:** Tamu tidak mengenali tagihan minibar Rp150.000 dan meminta penghapusan.
+                - **Keputusan Agen:** Billing membaca folio, tetapi perubahan tagihan wajib ditinjau staf.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 3 (Kamar Kotor)", key="story_card_s03", use_container_width=True):
+            if st.button("▶️ Jalankan Cerita 3 (Sengketa Tagihan)", key="story_card_s03", use_container_width=True):
                 _start_scenario(model, "S03", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
@@ -404,15 +391,15 @@ def render_story_cards(model: Any) -> None:
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 🍳 Cerita 4: Layanan Pertanyaan Rutin (Concierge)")
+            st.markdown("#### 🕐 Cerita 4: Informasi Check-In (Concierge)")
             st.markdown(
                 """
-                - **Tamu:** Mbak Rina (Kamar 105)
-                - **Situasi:** Menanyakan informasi jam sarapan pagi dan fasilitas kolam renang.
-                - **Penanganan Cepat:** Agen concierge menjawab langsung dalam hitungan detik tanpa membebani staf operasional.
+                - **Tamu:** Tamu Demo (Kamar 105)
+                - **Situasi:** Menanyakan jam check-in hotel.
+                - **Penanganan Cepat:** Agen concierge menjawab dari FAQ lokal tanpa tiket fisik atau migrasi.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 4 (Informasi Sarapan)", key="story_card_s04", use_container_width=True):
+            if st.button("▶️ Jalankan Cerita 4 (Informasi Check-In)", key="story_card_s04", use_container_width=True):
                 _start_scenario(model, "S04", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
@@ -532,6 +519,15 @@ def get_presenter_telemetry(
             phase_title = "Tamu Menolak Tawaran"
             headline = "Tamu Memilih Tetap di Kamar Asal (Kasus Ditutup)"
             talking_point = "Tamu menolak opsi kamar pengganti. Sistem mencatat keputusan tamu dan menutup alur otomatis."
+
+        elif status == "PROCESSING" and case and case.get("consent"):
+            proposed = case.get("proposed_room_id", "R103")
+            agent = "🛏️ Reservation Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Persetujuan Diterima — Finalisasi Kunci"
+            headline = f"Tamu Menyetujui Pindah ke {proposed}. Sistem Mengunci Transaksi Database."
+            talking_point = "Persetujuan tamu telah tercatat! Sistem melakukan sinkronisasi database kamar dan mengalokasikan kunci kamar secara atomik."
 
         elif status == "WAITING_GUEST":
             proposed = case.get("proposed_room_id", "R103")
@@ -821,12 +817,15 @@ def render_universal_action_bar(
             col_act1, col_act2, col_act3 = st.columns([3, 3, 6])
             with col_act1:
                 if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
-                    _submit_guest_choice(simulation, True)
-                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}!", icon="🛎️")
+                    simulation.submit_guest_choice(True, actor="GUEST")
+                    simulation.run_until_pause()
+                    st.session_state["autoplay"] = False
+                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}! Perpindahan selesai diproses.", icon="🎉")
                     st.rerun()
             with col_act2:
                 if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
                     simulation.submit_guest_choice(False, actor="GUEST")
+                    st.session_state["autoplay"] = False
                     st.toast("❌ Tamu menolak tawaran kamar pengganti.", icon="🛎️")
                     st.rerun()
             with col_act3:
@@ -939,7 +938,7 @@ def render_universal_action_bar(
         st.success(
             f"**{status_label}** (Kamar Resmi Tamu: **{assigned}**). "
             f"👉 Anda dapat melihat evaluasi efisiensi di tab **🏨 Ringkasan Eksekutif & ROI**, "
-            f"atau memilih skenario cerita lain di sidebar."
+                f"atau memilih skenario cerita lain di Dasbor Eksekutif."
         )
 
     # 4. Trigger next step if autoplay is actively on
@@ -1299,11 +1298,14 @@ def render_simulation_tab(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(True, actor="GUEST")
+                simulation.run_until_pause()
+                st.session_state["autoplay"] = False
                 st.rerun()
             if guest_columns[1].button(
                 "Tamu: Tolak perpindahan", key="guest_decline", use_container_width=True
             ):
                 simulation.submit_guest_choice(False, actor="GUEST")
+                st.session_state["autoplay"] = False
                 st.rerun()
 
     # Panel peran: staf
@@ -1342,17 +1344,13 @@ def render_simulation_tab(
                 if ticket["status"] == "PENDING" and columns[1].button(
                     "Mulai", key=f"ticket_start_{ticket['id']}"
                 ):
-                    res = simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
-                    if res.get("ok"):
-                        st.toast(f"Tiket {ticket['id']} -> IN_PROGRESS")
-                        st.rerun()
+                    simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
+                    st.rerun()
                 if ticket["status"] == "IN_PROGRESS" and columns[2].button(
                     "Selesai", key=f"ticket_done_{ticket['id']}"
                 ):
-                    res = simulation.staff_update_ticket(ticket["id"], "DONE")
-                    if res.get("ok"):
-                        st.toast(f"Tiket {ticket['id']} -> DONE")
-                        st.rerun()
+                    simulation.staff_update_ticket(ticket["id"], "DONE")
+                    st.rerun()
 
 
 def render_trace_tab(
@@ -1859,7 +1857,10 @@ def render_guest_portal(
                 type="primary",
                 use_container_width=True,
             ):
-                _submit_guest_choice(simulation, True)
+                simulation.submit_guest_choice(True, actor="GUEST")
+                simulation.run_until_pause()
+                st.session_state["autoplay"] = False
+                st.toast(f"✅ Anda telah menyetujui pindah ke kamar {case.get('proposed_room_id')}! Kamar resmi siap huni.", icon="🎉")
                 st.rerun()
             if b_cols[1].button(
                 "❌ Tolak & Tetap di Kamar Ini",
@@ -1867,6 +1868,8 @@ def render_guest_portal(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(False, actor="GUEST")
+                st.session_state["autoplay"] = False
+                st.toast("❌ Anda menolak tawaran kamar pengganti.", icon="🛎️")
                 st.rerun()
 
     elif status == "WAITING_HUMAN":
@@ -1890,9 +1893,15 @@ def render_guest_portal(
     # Advance step helper if pending
     if snapshot.get("has_pending_work"):
         st.caption("Pekerjaan agen masih berlangsung di latar belakang:")
-        if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary"):
-            simulation.step()
-            st.rerun()
+        c_step1, c_step2 = st.columns(2)
+        with c_step1:
+            if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary", use_container_width=True):
+                simulation.step()
+                st.rerun()
+        with c_step2:
+            if st.button("⚡ Selesaikan Seluruh Alur Otomatis", key="guest_portal_finish", type="primary", use_container_width=True):
+                simulation.run_until_pause()
+                st.rerun()
 
 
 def render_staff_portal(
@@ -2099,7 +2108,7 @@ def render_comprehension_tab() -> None:
     st.markdown("## 📖 Panduan Pemahaman Konsep & Cara Kerja")
     st.caption(
         "Pelajari bagaimana kecerdasan Mobile Agent bekerja di perhotelan dengan ilustrasi, "
-        "analogi nyata, komparasi bisnis, dan kuis interaktif."
+        "analogi nyata, dan komparasi bisnis."
     )
 
     st.divider()
@@ -2209,39 +2218,6 @@ def render_comprehension_tab() -> None:
             )
 
     st.divider()
-
-    # Section 4: Kuis Mini Interaktif 30-Detik
-    st.markdown("### 🎯 Kuis Mini 30-Detik: Uji Pemahaman Anda!")
-    st.caption("Coba jawab dua skenario nyata di bawah ini untuk melihat bagaimana sistem berpikir:")
-
-    q1_ans = st.radio(
-        "1. Seorang tamu komplain AC rusak jam 2 pagi dan menuntut pindah gratis ke kamar Presidential Suite (Rp3 Juta). Apa yang akan dilakukan sistem ACE?",
-        options=[
-            "Pilih jawaban...",
-            "A. Langsung berikan kamar Suite demi memuaskan tamu.",
-            "B. Kunci otomatis (Policy Guardrail) dan eskalasi ke Manajer Manusia!",
-        ],
-        key="quiz_q1",
-    )
-    if q1_ans.startswith("B"):
-        st.success("🎉 TEPAT SEKALI! Sistem ACE memiliki Policy Guardrail untuk mencegah kebocoran biaya kamar mewah liar tanpa persetujuan manajer.")
-    elif q1_ans.startswith("A"):
-        st.error("❌ Kurang tepat. Memberikan kamar mewah tanpa izin menyebabkan kerugian finansial hotel!")
-
-    st.write("")
-    q2_ans = st.radio(
-        "2. Di sistem Front Office kamar R102 terdata kosong, tetapi di database Housekeeping statusnya masih 'DIRTY' (belum dicuci). Apa yang dilakukan Mobile Investigator?",
-        options=[
-            "Pilih jawaban...",
-            "A. Tetap tawarkan R102 ke tamu karena di Front Office tercatat kosong.",
-            "B. Otomatis eliminasi R102 dan pilih kamar R103 yang terbukti bersih!",
-        ],
-        key="quiz_q2",
-    )
-    if q2_ans.startswith("B"):
-        st.success("🎉 TEPAT SEKALI! Inilah keunggulan Mobile Agent: memverifikasi kondisi fisik lokal agar tidak terjadi Double Complaint!")
-    elif q2_ans.startswith("A"):
-        st.error("❌ Kurang tepat. Memindahkan tamu ke kamar kotor akan membuat tamu komplain dua kali dan marah besar!")
 
 
 def render_executive_dashboard(

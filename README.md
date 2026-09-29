@@ -65,8 +65,8 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
 1. **🎬 4 Kartu Kasus Nyata (1-Click Story):**
    - ❄️ **Kasus 1: AC Bocor Tengah Malam (Pak Budi - R101)** → Happy path otomatis penuh (kamar dipindahkan ke R103).
    - 🛡️ **Kasus 2: Tamu Minta Kamar Mewah Gratis (Ibu Sarah - R201)** → Proteksi biaya via Policy Guardrail & eskalasi manajer.
-   - 🧹 **Kasus 3: Kamar Kotor Dieliminasi (Mas Kevin - R101)** → Verifikasi DB Housekeeping fisik (R102 kotor ditolak, R103 dipilih).
-   - 🍳 **Kasus 4: Layanan Informasi Rutin (Mbak Rina - R105)** → Informasi instan concierge Front Office.
+   - 💰 **Kasus 3: Sengketa Tagihan Minibar** → Folio dibaca, tetapi perubahan tagihan dieskalasi ke staf.
+   - 🕐 **Kasus 4: Informasi Check-In** → Informasi instan dari FAQ lokal Concierge Front Office.
 2. **🗺️ Peta Pergerakan Agen (2D Node Map Visualizer):**
    - Diagram topologi interaktif 2 node (`FRONT_OFFICE` ↔ `OPERATIONS`) yang memvisualisasikan posisi agen secara real-time (`📍 Posisi Agen`), koper state (`State Bag`), pipa migrasi data, dan gerbang kebijakan (*Policy Guardrail*).
 3. **⏯️ Auto-Play Simulation Player:**
@@ -81,11 +81,10 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
    - **Komik Storyboard 6 Panel:** Menjelaskan perjalanan koper agen secara visual ramah awam.
    - **Kamus Analogi Dunia Nyata:** Konsep teknis (Mobile Agent, State Bag SHA-256, Policy Guardrail, Idempotency) dianalogikan dengan Auditor Koper Bersegel, Segel Lilin Kerajaan, Satpam Brankas Hotel, dan Sakelar Lampu Otomatis.
    - **Tabel Kamus Istilah:** Padanan kata antara istilah teknis IT vs istilah operasional hotel.
-   - **Kuis Interaktif 30 Detik:** 3 pertanyaan interaktif berbobot dengan evaluasi skor instan untuk menguji pemahaman audiens.
 
 ### B. Struktur Tab Navigasi:
 1. **`🏨 Dasbor Eksekutif & Cerita Kasus`** — Pemilihan skenario 1-klik, Peta Pergerakan Agen 2D, Live Stepper alur kasus, metrik efisiensi, dan kalkulator ROI.
-2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, Kamus Istilah, dan Kuis Interaktif 30 Detik.
+2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, dan Kamus Istilah.
 3. **`🛎️ HP Tamu (Layanan Tamu)`** — Simulasi tampilan smartphone tamu, percakapan agen interaktif, dan kartu persetujuan pindah kamar.
 4. **`👔 Meja Kerja Staf Hotel`** — Antrean kasus eskalasi manajer (approval gate) dan papan tiket kerja fisik (Housekeeping/Maintenance).
 5. **`🎬 Uji Seluruh Skenario`** — Eksekusi batch seluruh skenario (Autorun) dengan ringkasan status kelulusan.
@@ -99,8 +98,8 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
 |---|---|---|---|
 | **S01** | AC kamar bocor, minta kamar setara | Agen triase → migrasi ke Operations → verifikasi fisik R102 (kotor) & R103 (bersih) → tawarkan R103 | `DIGITAL_COMPLETED` (setelah persetujuan tamu) |
 | **S02** | AC rusak, minta upgrade Suite gratis | Terdeteksi risiko over-kompensasi → bukti R201 terkumpul → dikunci aturan bisnis | `WAITING_HUMAN` (eskalasi wajib manajer) |
-| **S03** | Kamar pengganti kotor di database fisik | Menginspeksi status fisik kamar → mengeliminasi R102 DIRTY | Menawarkan R103 READY |
-| **S04** | Tanya jam sarapan & fasilitas | Ditangani instan oleh Concierge Front Office | Selesai instan tanpa tiket fisik |
+| **S03** | Sengketa tagihan minibar | Billing membaca folio → perubahan tagihan dikunci policy | `WAITING_HUMAN` (eskalasi wajib) |
+| **S04** | Tanya jam check-in | Ditangani instan oleh Concierge Front Office | Selesai instan tanpa tiket fisik |
 | **S05** | Permintaan handuk & perlengkapan mandi | Membuat tiket tugas fisik ke Housekeeping | Tiket: `PENDING → IN_PROGRESS → DONE` |
 | **S06** | Rincian tagihan minibar | Verifikasi folio billing F01+F02 (Rp650.000) | Selesai transparan tanpa perubahan tagihan |
 
