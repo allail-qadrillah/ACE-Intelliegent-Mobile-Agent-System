@@ -61,27 +61,35 @@ python -m hotel_demo.ml --regenerate      # generate ulang dataset sintetis
 
 Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens non-teknis:
 
-### A. Fitur Kemudahan Penggunaan (Usability Features):
+### A. Fitur Kemudahan Penggunaan (Usability & Comprehension Features):
 1. **🎬 4 Kartu Kasus Nyata (1-Click Story):**
    - ❄️ **Kasus 1: AC Bocor Tengah Malam (Pak Budi - R101)** → Happy path otomatis penuh (kamar dipindahkan ke R103).
    - 🛡️ **Kasus 2: Tamu Minta Kamar Mewah Gratis (Ibu Sarah - R201)** → Proteksi biaya via Policy Guardrail & eskalasi manajer.
    - 🧹 **Kasus 3: Kamar Kotor Dieliminasi (Mas Kevin - R101)** → Verifikasi DB Housekeeping fisik (R102 kotor ditolak, R103 dipilih).
    - 🍳 **Kasus 4: Layanan Informasi Rutin (Mbak Rina - R105)** → Informasi instan concierge Front Office.
-2. **⏯️ Auto-Play Simulation Player:**
-   - Tombol `[▶️ Putar Otomatis]`, `[⏸️ Jeda]`, dan `[⏭️ Langkah Berikutnya]` dengan animasi bertahap ~1 detik per langkah.
-3. **🚨 Universal Action Bar:**
+2. **🗺️ Peta Pergerakan Agen (2D Node Map Visualizer):**
+   - Diagram topologi interaktif 2 node (`FRONT_OFFICE` ↔ `OPERATIONS`) yang memvisualisasikan posisi agen secara real-time (`📍 Posisi Agen`), koper state (`State Bag`), pipa migrasi data, dan gerbang kebijakan (*Policy Guardrail*).
+3. **⏯️ Auto-Play Simulation Player:**
+   - Tombol `[▶️ Putar Otomatis]`, `[⏸️ Jeda]`, dan `[⏭️ Langkah Berikutnya]` dengan animasi bertahap ~1 detik per langkah untuk demonstrasi langsung.
+4. **🚨 Universal Action Bar:**
    - Tombol persetujuan tamu (`[✅ Setujui Pindah Kamar]`) dan tombol eskalasi manajer (`[👤 Ambil Alih Kasus]`) langsung muncul di bagian atas layar tab mana pun saat dibutuhkan, tanpa perlu mencari tab lain.
-4. **📊 Live Visual Flow Stepper & Real-time Narration:**
+5. **📊 Live Visual Flow Stepper & Real-time Narration:**
    - Indikator 6 fase visual perhotelan (*Keluhan Masuk → Analisis SOP → Koordinasi Dept → Verifikasi Fisik → Persetujuan → Selesai*) beserta kotak penjelasan *"Apa yang terjadi di balik layar"*.
-5. **🧮 Kalkulator Simulasi Penghematan Hotel (Interactive ROI):**
+6. **🧮 Kalkulator Simulasi Penghematan Hotel (Interactive ROI):**
    - Widget interaktif untuk menghitung estimasi jam kerja staf yang dihemat dan uang yang diselamatkan dari kebocoran kamar mewah.
+7. **📖 Modul Edukasi: Cara Kerja & Analogi Nyata:**
+   - **Komik Storyboard 6 Panel:** Menjelaskan perjalanan koper agen secara visual ramah awam.
+   - **Kamus Analogi Dunia Nyata:** Konsep teknis (Mobile Agent, State Bag SHA-256, Policy Guardrail, Idempotency) dianalogikan dengan Auditor Koper Bersegel, Segel Lilin Kerajaan, Satpam Brankas Hotel, dan Sakelar Lampu Otomatis.
+   - **Tabel Kamus Istilah:** Padanan kata antara istilah teknis IT vs istilah operasional hotel.
+   - **Kuis Interaktif 30 Detik:** 3 pertanyaan interaktif berbobot dengan evaluasi skor instan untuk menguji pemahaman audiens.
 
 ### B. Struktur Tab Navigasi:
-1. **`🏨 Dasbor Eksekutif & Cerita Kasus`** — Tempat memilih cerita demo, metrik efisiensi, dan kalkulator ROI.
-2. **`🛎️ HP Tamu (Layanan Tamu)`** — Simulasi tampilan smartphone tamu, percakapan agen, dan kartu persetujuan.
-3. **`👔 Meja Kerja Staf Hotel`** — Antrean kasus eskalasi manajer dan papan tiket kerja fisik (Housekeeping/Maintenance).
-4. **`🎬 Uji Seluruh Skenario`** — Eksekusi batch seluruh skenario (Autorun) dengan ringkasan status.
-5. **`🛠️ Mode Pengembang (Khusus IT)`** — Konsol teknis khusus pengembang: Lab Step Simulator, observabilitas event log DB, komparasi Mobile vs Static, dan confusion matrix ML.
+1. **`🏨 Dasbor Eksekutif & Cerita Kasus`** — Pemilihan skenario 1-klik, Peta Pergerakan Agen 2D, Live Stepper alur kasus, metrik efisiensi, dan kalkulator ROI.
+2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, Kamus Istilah, dan Kuis Interaktif 30 Detik.
+3. **`🛎️ HP Tamu (Layanan Tamu)`** — Simulasi tampilan smartphone tamu, percakapan agen interaktif, dan kartu persetujuan pindah kamar.
+4. **`👔 Meja Kerja Staf Hotel`** — Antrean kasus eskalasi manajer (approval gate) dan papan tiket kerja fisik (Housekeeping/Maintenance).
+5. **`🎬 Uji Seluruh Skenario`** — Eksekusi batch seluruh skenario (Autorun) dengan ringkasan status kelulusan.
+6. **`🛠️ Mode Pengembang (Khusus IT)`** — Konsol teknis khusus pengembang: Lab Step Simulator, observabilitas event log DB, komparasi Mobile vs Static, dan confusion matrix ML.
 
 ---
 
@@ -132,7 +140,7 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
 ├── app.py                         # Entry point web Streamlit (Business-First Layout)
 ├── requirements.txt               # Daftar pustaka dependensi
 ├── README.md                      # Dokumentasi komprehensif proyek
-├── presentasi_ace_mobile_agent_v3.pptx # Slide presentasi lengkap (11 Slide)
+├── presentasi_ace_mobile_agent_v4.pptx # Slide presentasi eksekutif & teknis (16:9 Modern)
 ├── data/
 │   ├── hotel_seed.json            # Data awal kamar & reservasi Hotel Nusantara
 │   ├── scenarios.json             # Definisi skenario S01 - S09
