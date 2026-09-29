@@ -818,9 +818,9 @@ def render_universal_action_bar(
             with col_act1:
                 if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
                     simulation.submit_guest_choice(True, actor="GUEST")
-                    simulation.step()
-                    st.session_state["autoplay"] = True
-                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}! Agen sedang memproses perpindahan...", icon="🛎️")
+                    simulation.run_until_pause()
+                    st.session_state["autoplay"] = False
+                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}! Perpindahan selesai diproses.", icon="🎉")
                     st.rerun()
             with col_act2:
                 if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
@@ -1298,16 +1298,14 @@ def render_simulation_tab(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(True, actor="GUEST")
-                simulation.step()
-                st.session_state["autoplay"] = True
-                st.toast(f"Tamu setuju pindah ke {case['proposed_room_id']}")
+                simulation.run_until_pause()
+                st.session_state["autoplay"] = False
                 st.rerun()
             if guest_columns[1].button(
                 "Tamu: Tolak perpindahan", key="guest_decline", use_container_width=True
             ):
                 simulation.submit_guest_choice(False, actor="GUEST")
                 st.session_state["autoplay"] = False
-                st.toast("Tamu menolak perpindahan")
                 st.rerun()
 
     # Panel peran: staf
@@ -1346,17 +1344,13 @@ def render_simulation_tab(
                 if ticket["status"] == "PENDING" and columns[1].button(
                     "Mulai", key=f"ticket_start_{ticket['id']}"
                 ):
-                    res = simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
-                    if res.get("ok"):
-                        st.toast(f"Tiket {ticket['id']} -> IN_PROGRESS")
-                        st.rerun()
+                    simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
+                    st.rerun()
                 if ticket["status"] == "IN_PROGRESS" and columns[2].button(
                     "Selesai", key=f"ticket_done_{ticket['id']}"
                 ):
-                    res = simulation.staff_update_ticket(ticket["id"], "DONE")
-                    if res.get("ok"):
-                        st.toast(f"Tiket {ticket['id']} -> DONE")
-                        st.rerun()
+                    simulation.staff_update_ticket(ticket["id"], "DONE")
+                    st.rerun()
 
 
 def render_trace_tab(
@@ -1864,9 +1858,9 @@ def render_guest_portal(
                 use_container_width=True,
             ):
                 simulation.submit_guest_choice(True, actor="GUEST")
-                simulation.step()
-                st.session_state["autoplay"] = True
-                st.toast(f"✅ Anda telah menyetujui pindah ke kamar {case.get('proposed_room_id')}!", icon="🛎️")
+                simulation.run_until_pause()
+                st.session_state["autoplay"] = False
+                st.toast(f"✅ Anda telah menyetujui pindah ke kamar {case.get('proposed_room_id')}! Kamar resmi siap huni.", icon="🎉")
                 st.rerun()
             if b_cols[1].button(
                 "❌ Tolak & Tetap di Kamar Ini",
@@ -1899,9 +1893,15 @@ def render_guest_portal(
     # Advance step helper if pending
     if snapshot.get("has_pending_work"):
         st.caption("Pekerjaan agen masih berlangsung di latar belakang:")
-        if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary"):
-            simulation.step()
-            st.rerun()
+        c_step1, c_step2 = st.columns(2)
+        with c_step1:
+            if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary", use_container_width=True):
+                simulation.step()
+                st.rerun()
+        with c_step2:
+            if st.button("⚡ Selesaikan Seluruh Alur Otomatis", key="guest_portal_finish", type="primary", use_container_width=True):
+                simulation.run_until_pause()
+                st.rerun()
 
 
 def render_staff_portal(
