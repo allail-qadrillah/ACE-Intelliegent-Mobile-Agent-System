@@ -54,14 +54,14 @@ Durasi: sekitar 5–7 menit.
 Gunakan skenario ini untuk menunjukkan alur sukses end-to-end.
 
 1. Pada kartu **Cerita 1: AC Bocor Tengah Malam**, klik **▶️ Jalankan Cerita 1 (AC Bocor)**.
-2. Aplikasi menjalankan agen secara bertahap:
+2. Spanduk **Presenter** di bagian atas menjalankan agen secara bertahap. Klik **▶️ Putar** atau gunakan **Langkah Berikutnya**:
    - Scenario Scout membaca permintaan tamu;
    - Orchestrator menentukan alur pindah kamar;
    - state agen berpindah dari `FRONT_OFFICE` ke `OPERATIONS`;
    - Mobile Investigator memeriksa kamar pengganti;
    - R102 ditolak karena kotor;
    - R103 dipilih karena bersih dan siap.
-3. Saat muncul kartu **Persetujuan Tamu**, klik **✅ Setujui Pindah ke R103**.
+3. Presenter berhenti otomatis saat muncul kartu **Persetujuan Tamu**. Klik **✅ Setujui Pindah ke R103**.
 4. Tunjukkan hasil akhir `DIGITAL_COMPLETED` dan kamar resmi tamu menjadi `R103`.
 5. Jelaskan inti nilai sistem:
    > Sistem tidak hanya melihat kamar kosong. Sistem memeriksa kesiapan fisik sebelum menawarkan kamar kepada tamu.
@@ -70,7 +70,7 @@ Gunakan skenario ini untuk menunjukkan alur sukses end-to-end.
 
 Gunakan skenario ini untuk menunjukkan bahwa agen tidak boleh mengambil keputusan finansial tanpa batas.
 
-1. Klik **Cerita 2: Tamu Minta Suite Mewah**.
+1. Klik **Cerita 2: Tamu Minta Suite Mewah** pada Dasbor Eksekutif.
 2. Biarkan simulasi berjalan sampai status `WAITING_HUMAN`.
 3. Tunjukkan alasan eskalasi dari **Policy Guardrail**.
 4. Klik **👤 Ambil Alih Kasus (Take Over)**.
@@ -83,8 +83,8 @@ Gunakan skenario ini untuk menunjukkan bahwa agen tidak boleh mengambil keputusa
 
 Gunakan jika ingin menunjukkan pekerjaan fisik dan portal staf.
 
-1. Buka **🛠️ Mode Pengembang (Khusus IT)** hanya jika perlu memilih skenario dari sidebar, atau gunakan kontrol skenario yang tersedia.
-2. Pilih skenario **S05 — Minta handuk**.
+1. Buka expander **⚙️ Mode Pengembang & Uji Teknis (Opsional)** pada sidebar.
+2. Pilih mode **Mobile Agent**, lalu klik **S05 — Minta handuk**.
 3. Jalankan langkah sampai tiket Housekeeping muncul.
 4. Buka tab **👔 Meja Kerja Staf Hotel**.
 5. Klik **▶️ Mulai Kerjakan**.
@@ -112,6 +112,10 @@ Untuk menunjukkan kasus yang perlu diambil alih manusia serta tiket Housekeeping
 
 Untuk menjalankan banyak skenario secara otomatis dan melihat ringkasan hasil. Pakai setelah demo utama, bukan sebagai pembukaan, supaya alur cerita tetap mudah diikuti.
 
+### 📖 Cara Kerja & Analogi Nyata
+
+Gunakan setelah demo bisnis untuk menjelaskan Mobile Agent dengan komik storyboard, analogi, kamus istilah, dan kuis singkat.
+
 ### 🛠️ Mode Pengembang (Khusus IT)
 
 Gunakan untuk menjelaskan implementasi teknis:
@@ -121,7 +125,33 @@ Gunakan untuk menjelaskan implementasi teknis:
 - **Evaluasi Ilmiah & ML:** laporan klasifikasi serta perbandingan Mobile vs Static;
 - **Arsitektur & Spesifikasi:** dua node logis dan batas simulasi.
 
-## 5. Narasi teknis singkat
+## 5. Flow aplikasi aktual
+
+```text
+Pilih cerita / skenario
+        ↓
+Simulation.start_scenario()
+        ↓
+Universal Action Bar + Presenter HUD menampilkan status dan aksi berikutnya
+        ↓
+Putar Otomatis atau Langkah Berikutnya
+        ↓
+Scenario Scout → Orchestrator → agent tujuan
+        ↓
+Keputusan:
+  S01  → inspeksi kamar → menunggu persetujuan tamu → commit R103
+  S02  → policy guardrail → WAITING_HUMAN → takeover staf
+  S03  → baca folio sengketa → WAITING_HUMAN → takeover staf
+  S04  → jawab FAQ → DIGITAL_COMPLETED
+  S05  → buat tiket housekeeping → staf ubah status tiket
+  S06  → tampilkan folio → DIGITAL_COMPLETED
+        ↓
+Dasbor bisnis / cara kerja / portal tamu / meja staf / console teknis
+```
+
+Catatan penting: tombol cerita pada dasbor langsung memulai skenario dan autoplay. Presenter HUD menyediakan pilihan tempo `1x`, `2x`, dan `3x`, tombol **Putar**, **Jeda**, serta langkah manual. Tombol skenario di sidebar dipakai untuk kontrol teknis, memilih mode `mobile` atau `static`, serta reset.
+
+## 6. Narasi teknis singkat
 
 Pakai narasi ini saat audiens bertanya tentang arsitektur:
 
@@ -129,7 +159,7 @@ Pakai narasi ini saat audiens bertanya tentang arsitektur:
 
 Jangan menyebut aplikasi sebagai sistem produksi, autentikasi hotel, atau mobile agent yang memindahkan kode antarserver. Implementasi ini adalah simulasi pembelajaran dengan database SQLite in-memory dan data sintetis.
 
-## 6. Tombol penting saat demo
+## 7. Tombol penting saat demo
 
 | Tombol | Fungsi |
 |---|---|
@@ -142,7 +172,7 @@ Jangan menyebut aplikasi sebagai sistem produksi, autentikasi hotel, atau mobile
 | `✅ Tutup Kasus Resmi` | Menutup kasus setelah catatan staf diisi |
 | `Reset Skenario` | Mengulang skenario aktif dari kondisi awal |
 
-## 7. Alur cadangan jika waktu sangat singkat
+## 8. Alur cadangan jika waktu sangat singkat
 
 1. Jalankan aplikasi.
 2. Klik **Cerita 1: AC Bocor Tengah Malam**.
@@ -151,7 +181,7 @@ Jangan menyebut aplikasi sebagai sistem produksi, autentikasi hotel, atau mobile
 5. Tunjukkan status `DIGITAL_COMPLETED`.
 6. Jalankan S02 hanya jika audiens ingin melihat keputusan yang memerlukan manusia.
 
-## 8. Penutup demo
+## 9. Penutup demo
 
 Tekankan tiga hasil:
 
