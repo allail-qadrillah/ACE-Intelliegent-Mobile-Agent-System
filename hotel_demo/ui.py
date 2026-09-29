@@ -325,6 +325,9 @@ def render_header() -> None:
         """,
         unsafe_allow_html=True,
     )
+    st.caption(
+        "Mode: Lokal · Data Sintetis · Tanpa Ketergantungan API Eksternal · Dua Node Logis: FRONT_OFFICE & OPERATIONS"
+    )
 
 
 def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
