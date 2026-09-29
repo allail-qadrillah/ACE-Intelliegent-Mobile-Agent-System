@@ -573,58 +573,73 @@ def render_universal_action_bar(
 def render_sidebar(model: Any) -> None:
     scenarios = load_scenarios()
     with st.sidebar:
-        st.subheader("Kontrol Demo")
-        mode = st.radio(
-            "Mode agen",
-            options=["mobile", "static"],
-            format_func=lambda value: MODE_LABELS[value],
-            index=0,
-            key="mode_radio",
-        )
-        active_mode = st.session_state.get("active_mode")
-        if active_mode is not None and mode != active_mode:
-            st.warning("Mode baru berlaku saat memilih/reset skenario.")
+        st.markdown("### 🏨 Hotel Nusantara")
+        st.caption("Sistem Otomasi Operasional & Layanan Tamu")
 
-        st.markdown("**Skenario**")
-        for scenario_id in SCENARIO_ORDER:
-            if st.button(
-                scenarios[scenario_id]["button_label"],
-                key=f"scenario_{scenario_id}",
-                use_container_width=True,
-            ):
-                _start_scenario(model, scenario_id, mode)
+        with st.container(border=True):
+            st.markdown("**📊 Ringkasan Properti Hari Ini:**")
+            st.markdown("- Total Kamar: **150 Kamar**")
+            st.markdown("- Terisi (Occupancy): **128 Kamar (85%)**")
+            st.markdown("- Kamar Bersih Siap: **18 Kamar**")
+            st.markdown("- Kamar Perlu Dicuci: **4 Kamar**")
 
-        has_active = st.session_state.get("active_scenario") is not None
-        if st.button(
-            "Reset Skenario",
-            key="reset_scenario",
-            disabled=not has_active,
-            use_container_width=True,
-        ):
-            _start_scenario(
-                model,
-                st.session_state["active_scenario"],
-                st.session_state.get("active_mode", mode),
-            )
+        st.markdown("**💡 Panduan Cepat:**")
+        st.info("Pilih salah satu **Kartu Kasus Nyata** di layar utama untuk menjalankan simulasi otomatis.")
 
         st.divider()
-        with st.expander("Aturan otonomi agen", expanded=False):
-            st.markdown(
-                "- Agen boleh memindahkan tamu ke kamar **setara, bersih, kosong, "
-                "tanpa biaya tambahan** hanya setelah persetujuan tamu dan semua aturan terpenuhi.\n"
-                "- Refund/kompensasi, upgrade di luar aturan, sengketa tagihan, permintaan manusia, "
-                "dan darurat **wajib diteruskan ke staf**.\n"
-                "- Policy wajib selalu menang atas prediksi ML."
+
+        # Developer & test runner controls folded cleanly here
+        with st.expander("⚙️ Mode Pengembang & Uji Teknis (Opsional)", expanded=False):
+            st.caption("Kontrol untuk keperluan pengujian dan evaluasi arsitektur:")
+            mode = st.radio(
+                "Mode agen",
+                options=["mobile", "static"],
+                format_func=lambda value: MODE_LABELS[value],
+                index=0,
+                key="mode_radio",
             )
-        with st.expander("Tentang Demo", expanded=False):
+            active_mode = st.session_state.get("active_mode")
+            if active_mode is not None and mode != active_mode:
+                st.warning("Mode baru berlaku saat memilih/reset skenario.")
+
+            st.markdown("**Skenario Pengujian**")
+            for scenario_id in SCENARIO_ORDER:
+                if st.button(
+                    scenarios[scenario_id]["button_label"],
+                    key=f"scenario_{scenario_id}",
+                    use_container_width=True,
+                ):
+                    _start_scenario(model, scenario_id, mode)
+
+            has_active = st.session_state.get("active_scenario") is not None
+            if st.button(
+                "Reset Skenario",
+                key="reset_scenario",
+                disabled=not has_active,
+                use_container_width=True,
+            ):
+                _start_scenario(
+                    model,
+                    st.session_state["active_scenario"],
+                    st.session_state.get("active_mode", mode),
+                )
+
+            st.divider()
+            st.markdown("**Aturan Kebijakan Agen:**")
+            st.caption(
+                "- Pemindahan kamar hanya ke kamar setara, bersih, kosong, tanpa biaya tambahan.\n"
+                "- Permintaan upgrade di luar hak wajib dieskalasi ke manajer.\n"
+                "- Aturan bisnis selalu diutamakan daripada otomasi."
+            )
+
+        with st.expander("👥 Tentang Tim (Kelompok 5)", expanded=False):
             st.markdown(
-                "**Kelompok 5**\n\n"
+                "**Mata Kuliah: Agent Enterprise**\n\n"
                 "- M. Al lail Qadrillah\n"
                 "- Dimas Prabowo\n"
                 "- Monanta Alfiareza\n"
                 "- Frans Alwan\n\n"
-                "Hotel fiktif **Hotel Nusantara Demo**. Seluruh data sintetis dan lokal. "
-                "NIM/PIC belum diisi. DL/RL/GNN tidak diimplementasikan pada MVP."
+                "Hotel fiktif **Hotel Nusantara Demo**. Seluruh data sintetis dan lokal."
             )
 
 
@@ -753,28 +768,28 @@ def _render_live_flow_stepper(snapshot: Optional[Dict[str, Any]]) -> None:
                 narrative = "🔴 Kasus berakhir dengan penolakan atau status kegagalan terstruktur."
         elif status == "WAITING_GUEST":
             current_phase = 5
-            narrative = f"🛎️ Menunggu Tamu: Proposal kamar pengganti {case.get('proposed_room_id')} telah dikirimkan ke HP tamu. Menunggu persetujuan (Consent)..."
+            narrative = f"🛎️ Menunggu Persetujuan Tamu: Tawaran kamar pengganti {case.get('proposed_room_id')} (Kondisi Bersih & Siap) telah dikirimkan ke HP tamu. Menunggu keputusan tamu."
         elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
             current_phase = 5
-            narrative = "⚠️ Eskalasi Manajer: Aturan bisnis (Policy Guardrail) mengunci AI karena terdeteksi risiko finansial/kebijakan. Kasus dialihkan ke Staf/Manajer Manusia."
+            narrative = "⚠️ Eskalasi Manajer: Sistem mendeteksi permintaan kompensasi di luar batas wewenang otomatis. Kasus dialihkan ke Manajer Hotel untuk melindungi pendapatan hotel."
         elif insp_results and len(insp_results) > 0:
             current_phase = 4
-            narrative = "🔍 Inspeksi Selesai: Agen telah memeriksa kondisi fisik kamar di Operations (kamar kotor dieliminasi, kamar bersih dipilih)."
+            narrative = "🔍 Pemeriksaan Kamar Selesai: Sistem telah memverifikasi fisik kamar di Housekeeping (kamar kotor otomatis dieliminasi, kamar bersih dipilih)."
         elif mig_stage in ("INITIATED", "PREPARED", "DEPARTED"):
             current_phase = 3
-            narrative = "✈️ Migrasi Agen Berlangsung: Mobile Investigator sedang membungkus koper state (SHA-256) dan transit dari FRONT_OFFICE ke OPERATIONS..."
+            narrative = "🚀 Koordinasi Departemen: Asisten AI sedang menghubungkan sistem Meja Depan dengan sistem Operasional & Housekeeping..."
         elif step_idx > 0:
             current_phase = 2
-            narrative = "⚖️ Triase & Evaluasi: Orchestrator mengklasifikasikan risiko via Machine Learning dan memeriksa aturan kebijakan bisnis (Policy Guardrail)."
+            narrative = "⚖️ Analisis Kasus: Asisten AI mengidentifikasi jenis keluhan dan mengevaluasi batasan kebijakan kompensasi hotel."
 
-    # Visual Stepper Bar
+    # Visual Stepper Bar (Pure Hospitality Terms)
     steps = [
-        ("1. Pesan Masuk", "Keluhan Tamu"),
-        ("2. Triase & Policy", "Evaluasi AI/Rules"),
-        ("3. Migrasi Agen", "Transit ke Operations"),
-        ("4. Inspeksi Kamar", "Verifikasi Fisik"),
-        ("5. Persetujuan / Staf", "Approval / Eskalasi"),
-        ("6. Resolusi Selesai", "Mutasi / Closing"),
+        ("1. Keluhan Masuk", "Laporan dari Tamu"),
+        ("2. Analisis Kasus", "Evaluasi SOP Hotel"),
+        ("3. Koordinasi Dept", "Pemeriksaan Sistem"),
+        ("4. Verifikasi Fisik", "Kesiapan Kamar"),
+        ("5. Persetujuan / Staf", "Konfirmasi / Manajer"),
+        ("6. Masalah Selesai", "Kamar Resmi Pindah"),
     ]
 
     cols = st.columns(6)
