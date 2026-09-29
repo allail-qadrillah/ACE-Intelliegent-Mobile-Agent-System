@@ -340,6 +340,19 @@ def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
     st.session_state["autoplay"] = False
 
 
+def _submit_guest_choice(simulation: Simulation, accept: bool) -> None:
+    """Kirim keputusan tamu lalu lanjutkan alur.
+
+    ``submit_guest_choice(True)`` hanya mengantre pesan GUEST_CONSENT; status kasus
+    tetap WAITING_GUEST sampai Orchestrator memprosesnya. Tanpa langkah ini tombol
+    Putar/Maju tetap terkunci dan kartu persetujuan muncul lagi (demo macet).
+    """
+    result = simulation.submit_guest_choice(accept, actor="GUEST")
+    if result.get("ok") and result.get("accepted"):
+        simulation.step()  # Orchestrator memproses consent → status PROCESSING
+        st.session_state["autoplay"] = True  # lanjutkan recheck & commit otomatis
+
+
 def render_story_cards(model: Any) -> None:
     """Renders 4 interactive story scenario cards for quick one-click demo."""
     st.markdown("### 🎬 Pilih Skenario Cerita Demo Interaktif")
@@ -808,7 +821,7 @@ def render_universal_action_bar(
             col_act1, col_act2, col_act3 = st.columns([3, 3, 6])
             with col_act1:
                 if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
-                    simulation.submit_guest_choice(True, actor="GUEST")
+                    _submit_guest_choice(simulation, True)
                     st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}!", icon="🛎️")
                     st.rerun()
             with col_act2:
@@ -1846,7 +1859,7 @@ def render_guest_portal(
                 type="primary",
                 use_container_width=True,
             ):
-                simulation.submit_guest_choice(True, actor="GUEST")
+                _submit_guest_choice(simulation, True)
                 st.rerun()
             if b_cols[1].button(
                 "❌ Tolak & Tetap di Kamar Ini",

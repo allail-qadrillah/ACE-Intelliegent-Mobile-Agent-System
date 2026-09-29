@@ -150,7 +150,16 @@ Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens n
 │   ├── repository.py              # Dua database SQLite, transaksi atomik
 │   ├── policy.py                  # Aturan bisnis wajib (Policy Guardrail)
 │   ├── ml.py                      # Model Logistic Regression triase komplain
-│   ├── agents.py                  # Logika agen & kernel inspeksi kandidat kamar
+│   ├── agents/                    # Satu file per agen + kernel inspeksi kandidat kamar
+│   │   ├── base.py                #   BaseAgent + tabel capability
+│   │   ├── inspection.py          #   evaluate_candidates (kernel murni)
+│   │   ├── scenario_scout.py      #   ScenarioScoutAgent
+│   │   ├── orchestrator.py        #   OrchestratorAgent
+│   │   ├── reservation.py         #   ReservationAgent
+│   │   ├── billing.py             #   BillingAgent
+│   │   ├── concierge.py           #   ConciergeAgent
+│   │   ├── operations.py          #   OperationsAgent
+│   │   └── mobile_investigator.py #   MobileInvestigator
 │   ├── migration.py               # Siklus hidup migrasi (PREPARE, DEPART, ARRIVE)
 │   ├── simulation.py              # Engine simulasi deterministik, lifecycle kasus
 │   ├── evaluation.py              # Komparasi kuantitatif Mobile vs Static
