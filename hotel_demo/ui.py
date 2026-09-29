@@ -184,22 +184,22 @@ def render_landing_page(model: Any) -> None:
         (
             "📋",
             "1. Pilih Skenario",
-            "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S06.",
+            "Buka **sidebar** (kiri) dan klik salah satu skenario S01–S09.",
         ),
         (
             "🔄",
             "2. Jalankan Simulasi",
-            'Tekan **"Langkah Berikutnya"** di tab Simulasi untuk maju step-by-step.',
+            'Gunakan spanduk **Presenter** di atas untuk **Putar** atau maju satu langkah.',
         ),
         (
             "🔍",
             "3. Lihat Jejak",
-            'Buka tab **"Jejak & State"** untuk melihat pesan, event, dan checkpoint migrasi.',
+            'Buka **Mode Pengembang** untuk melihat Lab Step, audit event, dan checkpoint migrasi.',
         ),
         (
             "📊",
             "4. Evaluasi",
-            'Buka tab **"Evaluasi"** dan klik **"Jalankan Perbandingan"** untuk membandingkan Mobile vs Static.',
+            'Buka **Mode Pengembang → Evaluasi Ilmiah & ML** untuk membandingkan Mobile vs Static.',
         ),
     ]
 
@@ -218,7 +218,7 @@ def render_landing_page(model: Any) -> None:
     st.divider()
 
     # ── 6 Skenario ───────────────────────────────────────────────────────
-    st.markdown("## 🎬 6 Skenario Demo")
+    st.markdown("## 🎬 9 Skenario Demo")
     st.caption(
         "Klik tombol di sidebar kiri untuk memulai skenario, atau pilih mode agen terlebih dahulu."
     )
@@ -362,15 +362,15 @@ def render_story_cards(model: Any) -> None:
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 🧹 Cerita 3: Kamar Kotor Ditolak (Verifikasi Database)")
+            st.markdown("#### 💰 Cerita 3: Sengketa Tagihan Minibar (Eskalasi)")
             st.markdown(
                 """
-                - **Tamu:** Mas Kevin (Kamar 101)
-                - **Situasi:** Komplain fasilitas. Kamar pengganti di front office terdata kosong.
-                - **Kecerdasan Agen:** Memeriksa DB Housekeeping fisik, mendeteksi R102 masih kotor (DIRTY), otomatis menolaknya dan memilih R103.
+                - **Tamu:** Tamu Demo (Kamar 101)
+                - **Situasi:** Tamu tidak mengenali tagihan minibar Rp150.000 dan meminta penghapusan.
+                - **Keputusan Agen:** Billing membaca folio, tetapi perubahan tagihan wajib ditinjau staf.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 3 (Kamar Kotor)", key="story_card_s03", use_container_width=True):
+            if st.button("▶️ Jalankan Cerita 3 (Sengketa Tagihan)", key="story_card_s03", use_container_width=True):
                 _start_scenario(model, "S03", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
@@ -391,15 +391,15 @@ def render_story_cards(model: Any) -> None:
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 🍳 Cerita 4: Layanan Pertanyaan Rutin (Concierge)")
+            st.markdown("#### 🕐 Cerita 4: Informasi Check-In (Concierge)")
             st.markdown(
                 """
-                - **Tamu:** Mbak Rina (Kamar 105)
-                - **Situasi:** Menanyakan informasi jam sarapan pagi dan fasilitas kolam renang.
-                - **Penanganan Cepat:** Agen concierge menjawab langsung dalam hitungan detik tanpa membebani staf operasional.
+                - **Tamu:** Tamu Demo (Kamar 105)
+                - **Situasi:** Menanyakan jam check-in hotel.
+                - **Penanganan Cepat:** Agen concierge menjawab dari FAQ lokal tanpa tiket fisik atau migrasi.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 4 (Informasi Sarapan)", key="story_card_s04", use_container_width=True):
+            if st.button("▶️ Jalankan Cerita 4 (Informasi Check-In)", key="story_card_s04", use_container_width=True):
                 _start_scenario(model, "S04", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
@@ -884,7 +884,7 @@ def render_universal_action_bar(
         st.success(
             f"**{status_label}** (Kamar Resmi Tamu: **{assigned}**). "
             f"👉 Anda dapat melihat evaluasi efisiensi di tab **🏨 Ringkasan Eksekutif & ROI**, "
-            f"atau memilih skenario cerita lain di sidebar."
+                f"atau memilih skenario cerita lain di Dasbor Eksekutif."
         )
 
     # 4. Trigger next step if autoplay is actively on

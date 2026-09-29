@@ -38,6 +38,23 @@ def main() -> None:
     render_universal_action_bar(snapshot, simulation)
 
     # Clean Business-First Navigation with Dedicated Comprehension Suite
+    st.markdown(
+        """
+        <style>
+        [data-testid="stMainBlockContainer"]:has([data-testid="stTabs"]) {
+            padding-bottom: 3rem !important;
+        }
+        [data-testid="stTabs"] div:has(> [data-baseweb="tab-list"]) {
+            position: sticky;
+            top: 3.75rem;
+            z-index: 999;
+            background: var(--background-color, #ffffff);
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     tab_executive, tab_comprehension, tab_guest, tab_staff, tab_autorun, tab_technical = st.tabs(
         [
             "🏨 Dasbor Eksekutif & Cerita Kasus",
