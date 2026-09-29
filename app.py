@@ -10,6 +10,7 @@ from hotel_demo.ui import (
     render_header,
     render_sidebar,
     render_technical_suite,
+    render_universal_action_bar,
 )
 
 st.set_page_config(page_title="Demo Mobile Agent Hotel", layout="wide")
@@ -28,6 +29,9 @@ def main() -> None:
 
     simulation = st.session_state.get("simulation")
     snapshot = simulation.snapshot() if simulation is not None else None
+
+    # Universal Action Bar & Next Action Guide on top of all views
+    render_universal_action_bar(snapshot, simulation)
 
     tab_suite_bisnis, tab_suite_teknis = st.tabs(
         [

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
@@ -325,9 +326,6 @@ def render_header() -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.caption(
-        "Mode: Lokal · Data Sintetis · Tanpa Ketergantungan API Eksternal · Dua Node Logis: FRONT_OFFICE & OPERATIONS"
-    )
 
 
 def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
@@ -339,6 +337,237 @@ def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
     st.session_state["simulation"] = simulation
     st.session_state["active_scenario"] = scenario_id
     st.session_state["active_mode"] = mode
+    st.session_state["autoplay"] = False
+
+
+def render_story_cards(model: Any) -> None:
+    """Renders 4 interactive story scenario cards for quick one-click demo."""
+    st.markdown("### 🎬 Pilih Skenario Cerita Demo Interaktif")
+    st.caption("Pilih salah satu kasus nyata di bawah ini untuk memulai simulasi langsung:")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        with st.container(border=True):
+            st.markdown("#### ❄️ Cerita 1: AC Bocor Tengah Malam (Otomatis Penuh)")
+            st.markdown(
+                """
+                - **Tamu:** Pak Budi (Kamar 101)
+                - **Situasi:** AC kamar bocor dan panas jam 01:00 pagi. Butuh kamar pengganti.
+                - **Alur Agen:** Triase -> Migrasi ke Operations -> Verifikasi kamar bersih R103 -> Permintaan persetujuan tamu -> Kamar dipindahkan.
+                """
+            )
+            if st.button("▶️ Jalankan Cerita 1 (AC Bocor)", key="story_card_s01", type="primary", use_container_width=True):
+                _start_scenario(model, "S01", "mobile")
+                st.session_state["autoplay"] = True
+                st.rerun()
+
+        with st.container(border=True):
+            st.markdown("#### 🧹 Cerita 3: Kamar Kotor Ditolak (Verifikasi Database)")
+            st.markdown(
+                """
+                - **Tamu:** Mas Kevin (Kamar 101)
+                - **Situasi:** Komplain fasilitas. Kamar pengganti di front office terdata kosong.
+                - **Kecerdasan Agen:** Memeriksa DB Housekeeping fisik, mendeteksi R102 masih kotor (DIRTY), otomatis menolaknya dan memilih R103.
+                """
+            )
+            if st.button("▶️ Jalankan Cerita 3 (Kamar Kotor)", key="story_card_s03", use_container_width=True):
+                _start_scenario(model, "S03", "mobile")
+                st.session_state["autoplay"] = True
+                st.rerun()
+
+    with c2:
+        with st.container(border=True):
+            st.markdown("#### 🛡️ Cerita 2: Tamu Minta Suite Mewah (Proteksi Biaya)")
+            st.markdown(
+                """
+                - **Tamu:** Ibu Sarah (Kamar 201)
+                - **Situasi:** AC bermasalah, menuntut ganti rugi kamar Suite mewah gratis.
+                - **Proteksi Finansial:** AI mengunci otomasi karena batas kebijakan kompensasi dilanggar. Kasus dieskalasi ke Manajer Manusia.
+                """
+            )
+            if st.button("▶️ Jalankan Cerita 2 (Proteksi Finansial)", key="story_card_s02", use_container_width=True):
+                _start_scenario(model, "S02", "mobile")
+                st.session_state["autoplay"] = True
+                st.rerun()
+
+        with st.container(border=True):
+            st.markdown("#### 🍳 Cerita 4: Layanan Pertanyaan Rutin (Concierge)")
+            st.markdown(
+                """
+                - **Tamu:** Mbak Rina (Kamar 105)
+                - **Situasi:** Menanyakan informasi jam sarapan pagi dan fasilitas kolam renang.
+                - **Penanganan Cepat:** Agen concierge menjawab langsung dalam hitungan detik tanpa membebani staf operasional.
+                """
+            )
+            if st.button("▶️ Jalankan Cerita 4 (Informasi Sarapan)", key="story_card_s04", use_container_width=True):
+                _start_scenario(model, "S04", "mobile")
+                st.session_state["autoplay"] = True
+                st.rerun()
+
+
+def render_universal_action_bar(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+) -> None:
+    """Universal Action Bar & Dynamic Next-Action Guide on top of all tabs."""
+    with st.expander("📖 Panduan Kilat 1-Menit (Cara Menggunakan & Demo Aplikasi)", expanded=False):
+        st.markdown(
+            """
+            **3 Langkah Cepat Mengoperasikan Aplikasi Ini:**
+            1. **Pilih Skenario Cerita:** Klik tombol cerita di bawah atau pilih di sidebar kiri (rekomendasi: **S01: AC Rusak** untuk kasus otomatis, atau **S02: Minta Kamar Mewah** untuk proteksi finansial).
+            2. **Amati Agen Bekerja:** Klik **`▶️ Putar Otomatis`** untuk menyaksikan agen melakukan triase, bermigrasi ke operasi, dan memeriksa fisik kamar secara bertahap.
+            3. **Beri Keputusan Tamu / Staf:**
+               - Pada skenario S01: Klik **`✅ Setujui Pindah Kamar`** yang langsung muncul di layar Anda.
+               - Pada skenario S02: Klik **`👤 Ambil Alih Kasus`** sebagai staf untuk mencegah kerugian hotel.
+               - Buka tab **🏨 Ringkasan Eksekutif & ROI** untuk melihat kalkulator nilai bisnis nyata!
+            """
+        )
+
+    if snapshot is None or simulation is None:
+        st.info(
+            "👉 **Langkah Anda Sekarang:** Pilih salah satu skenario cerita di tab Eksekutif atau di sidebar sebelah kiri untuk memulai.",
+            icon="💡",
+        )
+        return
+
+    case = snapshot.get("case")
+    status = case.get("status") if case else None
+    has_pending = snapshot.get("has_pending_work", False)
+
+    # 1. Autoplay Control Bar State
+    is_autoplay = st.session_state.get("autoplay", False)
+
+    # Stop autoplay if at interaction or terminal state
+    if is_autoplay and (status in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING") or not has_pending):
+        is_autoplay = False
+        st.session_state["autoplay"] = False
+
+    # 2. Universal Action Cards
+    if status == "WAITING_GUEST":
+        proposed = case.get("proposed_room_id", "Kamar Baru")
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div style="background: #EFF6FF; border-left: 5px solid #3B82F6; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="font-size: 1.05rem; font-weight: bold; color: #1E40AF;">
+                        🛎️ Tindakan Diperlukan: Persetujuan Tamu (Guest Consent)
+                    </div>
+                    <div style="font-size: 0.9rem; color: #1E3A8A; margin-top: 4px;">
+                        Agen telah memeriksa kondisi fisik dan menawarkan perpindahan ke kamar <strong>{proposed}</strong> (Kondisi Bersih & Siap). Tamu perlu menyetujui tawaran ini.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col_act1, col_act2, col_act3 = st.columns([3, 3, 6])
+            with col_act1:
+                if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
+                    simulation.submit_guest_choice(True, actor="GUEST")
+                    st.rerun()
+            with col_act2:
+                if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
+                    simulation.submit_guest_choice(False, actor="GUEST")
+                    st.rerun()
+            with col_act3:
+                st.caption("ℹ️ Aksi cepat ini langsung terhubung tanpa perlu repot mencari tab Portal Tamu.")
+
+    elif status == "WAITING_HUMAN":
+        reasons = ", ".join(case.get("human_reason_codes", [])) or "Kebijakan Bisnis Terpicu"
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                <div style="background: #FEF3C7; border-left: 5px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="font-size: 1.05rem; font-weight: bold; color: #92400E;">
+                        🚨 Tindakan Diperlukan: Eskalasi ke Staf / Manajer Hotel
+                    </div>
+                    <div style="font-size: 0.9rem; color: #78350F; margin-top: 4px;">
+                        Aturan Policy Guardrail mengunci otomasi AI karena terdeteksi: <code>{reasons}</code>. Diperlukan keputusan manual manajer.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col_staff1, col_staff2 = st.columns([4, 8])
+            with col_staff1:
+                if st.button("👤 Ambil Alih Kasus (Take Over)", key="universal_staff_takeover", type="primary", use_container_width=True):
+                    simulation.staff_take_over()
+                    st.rerun()
+            with col_staff2:
+                st.caption("ℹ️ Klik untuk mengambil alih kasus langsung sebagai manajer hotel.")
+
+    elif status == "HUMAN_HANDLING":
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div style="background: #FFF7ED; border-left: 5px solid #EA580C; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="font-size: 1.05rem; font-weight: bold; color: #9A3412;">
+                        👔 Anda Sedang Menangani Kasus (Mode Staf Aktif)
+                    </div>
+                    <div style="font-size: 0.9rem; color: #7C2D12; margin-top: 4px;">
+                        Tulis catatan penyelesaian manajer hotel di bawah ini untuk menutup kasus secara resmi.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col_note, col_close = st.columns([8, 4])
+            with col_note:
+                staff_note = st.text_input(
+                    "Catatan Penyelesaian Staf:",
+                    value="Keluhan ditangani langsung oleh manajer; kompensasi ditolak sesuai SOP.",
+                    key="universal_staff_note",
+                )
+            with col_close:
+                st.write("")
+                if st.button("✅ Tutup Kasus Resmi", key="universal_staff_close", type="primary", use_container_width=True):
+                    out = simulation.staff_close_case(staff_note)
+                    if out.get("ok"):
+                        st.rerun()
+                    else:
+                        st.error("Catatan staf wajib diisi.")
+
+    elif status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF", "CLOSED_GUEST_DECLINED", "FAILED"):
+        assigned = case.get("assigned_room_id") or case.get("original_room_id")
+        status_label = {
+            "DIGITAL_COMPLETED": "🎉 Kasus Sukses Diselesaikan Secara Digital!",
+            "CLOSED_BY_STAFF": "✅ Kasus Berhasil Diselesaikan dan Ditutup oleh Staf!",
+            "CLOSED_GUEST_DECLINED": "⚪ Kasus Ditutup (Tamu menolak tawaran kamar)",
+            "FAILED": "🔴 Kasus Berakhir dengan Status Gagal Terstruktur",
+        }.get(status, f"Kasus Selesai: {status}")
+
+        st.success(
+            f"**{status_label}** (Kamar Resmi Tamu: **{assigned}**). "
+            f"👉 Anda dapat melihat evaluasi efisiensi di tab **🏨 Ringkasan Eksekutif & ROI**, "
+            f"atau memilih skenario cerita lain di sidebar."
+        )
+
+    # 3. Playback Controls & Next Step Guide when work is pending
+    if has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
+        with st.container(border=True):
+            p1, p2, p3 = st.columns([6, 3, 3])
+            with p1:
+                st.markdown(
+                    "💡 **Langkah Selanjutnya:** Agen sedang memproses kasus. "
+                    "Gunakan tombol di samping untuk memutar otomatis atau melangkah bertahap:"
+                )
+            with p2:
+                if is_autoplay:
+                    if st.button("⏸️ Jeda (Pause)", key="universal_pause_btn", use_container_width=True):
+                        st.session_state["autoplay"] = False
+                        st.rerun()
+                else:
+                    if st.button("▶️ Putar Otomatis", key="universal_autoplay_btn", type="primary", use_container_width=True):
+                        st.session_state["autoplay"] = True
+                        st.rerun()
+            with p3:
+                if st.button("⏭️ Langkah Berikutnya", key="universal_quick_step", use_container_width=True):
+                    simulation.step()
+                    st.rerun()
+
+    # 4. Trigger next step if autoplay is actively on
+    if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
+        time.sleep(1.0)
+        simulation.step()
+        st.rerun()
 
 
 def render_sidebar(model: Any) -> None:
@@ -1357,7 +1586,7 @@ def render_staff_portal(
 
 
 def render_executive_dashboard(
-    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any = None
 ) -> None:
     """Executive & ROI Business Dashboard."""
     st.markdown("## 🏨 Executive Dashboard & Analisis Nilai Bisnis")
@@ -1365,6 +1594,9 @@ def render_executive_dashboard(
         "Perspektif Kepemimpinan Bisnis: Penghematan Biaya, Percepatan Resolusi Komplain, "
         "dan Perlindungan Pendapatan Hotel Nusantara."
     )
+
+    if model is not None:
+        render_story_cards(model)
 
     st.divider()
 
@@ -1505,7 +1737,7 @@ def render_business_suite(
     )
 
     with b_tabs[0]:
-        render_executive_dashboard(snapshot, simulation)
+        render_executive_dashboard(snapshot, simulation, model)
     with b_tabs[1]:
         render_guest_portal(snapshot, simulation, model)
     with b_tabs[2]:
