@@ -405,16 +405,360 @@ def render_story_cards(model: Any) -> None:
                 st.rerun()
 
 
+def get_presenter_telemetry(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation] = None
+) -> Dict[str, Any]:
+    """Computes real-time telemetry, active agent, active node, and presenter talking points."""
+    if not snapshot:
+        return {
+            "step_index": 0,
+            "phase_num": 1,
+            "phase_title": "Skenario Siap",
+            "active_agent": "🛎️ Resepsionis Hotel",
+            "active_node": "🏢 FRONT_OFFICE",
+            "action_headline": "Menunggu Pemilihan Kasus",
+            "talking_point": "Silakan pilih salah satu cerita skenario untuk memulai simulasi penanganan komplain.",
+            "status_label": "STANDBY",
+        }
+
+    case = snapshot.get("case")
+    status = case.get("status") if case else "CREATED"
+    step_index = snapshot.get("step_index", 0)
+    scenario_id = snapshot.get("scenario_id", "S01")
+    migration = snapshot.get("migration")
+    mig_stage = migration.get("stage") if migration else None
+
+    # Retrieve last recorded event
+    last_event = simulation.events[-1] if (simulation and simulation.events) else None
+    ev_type = last_event.event_type if last_event else None
+    ev_agent = last_event.agent_id if last_event else None
+    ev_node = last_event.node_id if last_event else None
+    ev_details = last_event.details if last_event else {}
+    action = ev_details.get("action", "")
+
+    # Default fallback
+    agent = "🤖 Asisten AI Hotel"
+    node = "🏢 FRONT_OFFICE"
+    phase_num = 1
+    phase_title = "Penerimaan Komplain"
+    headline = "Keluhan Tamu Sedang Diproses"
+    talking_point = "Agen sedang memproses informasi keluhan dari tamu hotel."
+
+    # Scenarios S04, S05, S06
+    if scenario_id == "S04":
+        if status == "DIGITAL_COMPLETED":
+            agent = "🛎️ Concierge Front Office"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Jawaban Instan Selesai"
+            headline = "Concierge Menjawab Informasi Sarapan & Fasilitas Hotel"
+            talking_point = "Concierge Agent menjawab FAQ informasi tamu dalam hitungan detik tanpa membebani staf manusia atau memerlukan perpindahan fisik."
+        else:
+            agent = "🕵️ Scenario Scout & Concierge"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 2
+            phase_title = "Triase Informasi Tamu"
+            headline = "Scenario Scout Meneruskan Pertanyaan ke Agen Concierge"
+            talking_point = "Sistem mendeteksi bahwa pesan ini adalah pertanyaan rutin, bukan komplain fisik, sehingga langsung dijawab oleh Concierge."
+
+    elif scenario_id == "S05":
+        if status == "DIGITAL_COMPLETED":
+            agent = "🔧 Operations Agent & Housekeeping"
+            node = "🔧 OPERATIONS"
+            phase_num = 6
+            phase_title = "Tiket Tugas Diterbitkan"
+            headline = "Tiket Permintaan Handuk Diteruskan ke Meja Housekeeping"
+            talking_point = "Permintaan perlengkapan tamu langsung dikonversi menjadi tiket kerja fisik untuk staf Housekeeping di lapangan."
+        else:
+            agent = "🧠 Orchestrator Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 3
+            phase_title = "Koordinasi Operasional"
+            headline = "Orchestrator Mengirim Permintaan Fisik ke Node Operations"
+            talking_point = "Kasus diteruskan ke departemen operasional untuk pembuatan tiket kerja staf pembersih."
+
+    elif scenario_id == "S06":
+        if status == "DIGITAL_COMPLETED":
+            agent = "💳 Billing Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Verifikasi Folio Tagihan"
+            headline = "Billing Agent Memverifikasi Rincian Folio Minibar (Rp650.000)"
+            talking_point = "Billing Agent mengonfirmasi item folio F01 dan F02 senilai Rp650.000 secara transparan kepada tamu."
+        else:
+            agent = "💳 Billing Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 2
+            phase_title = "Pemeriksaan Folio"
+            headline = "Billing Agent Membaca Riwayat Transaksi Tamu"
+            talking_point = "Sistem mengakses database folio Front Office untuk memvalidasi tagihan minibar yang dipertanyakan tamu."
+
+    # Scenarios S01, S02, S03 (Room Change & Inspection)
+    else:
+        if status == "DIGITAL_COMPLETED":
+            assigned = case.get("assigned_room_id", "R103")
+            agent = "🛏️ Reservation Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Pindah Kamar Berhasil"
+            headline = f"Tamu Resmi Dipindahkan ke Kamar {assigned} (Selesai Otomatis)"
+            talking_point = f"Kasus selesai 100% secara digital! Database reservasi diperbarui, kunci kamar baru dialokasikan ke {assigned}, dan komplain berulang berhasil dicegah."
+
+        elif status == "CLOSED_BY_STAFF":
+            agent = "👔 Manajer Hotel"
+            node = "🏢 FRONT_OFFICE (Meja Manajer)"
+            phase_num = 6
+            phase_title = "Kasus Ditutup oleh Manajer"
+            headline = "Kasus Resmi Ditutup oleh Manajer (Zero Cost Leakage)"
+            talking_point = "Manajer hotel meninjau bukti audit trail dan menutup kasus dengan catatan resmi. Hotel berhasil diselamatkan dari kebocoran biaya kamar mewah ilegal!"
+
+        elif status == "CLOSED_GUEST_DECLINED":
+            agent = "🛎️ Layanan Tamu"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 6
+            phase_title = "Tamu Menolak Tawaran"
+            headline = "Tamu Memilih Tetap di Kamar Asal (Kasus Ditutup)"
+            talking_point = "Tamu menolak opsi kamar pengganti. Sistem mencatat keputusan tamu dan menutup alur otomatis."
+
+        elif status == "WAITING_GUEST":
+            proposed = case.get("proposed_room_id", "R103")
+            agent = "🛎️ Layanan Tamu (Persetujuan Tamu)"
+            node = "🏢 FRONT_OFFICE ➔ 📱 HP Tamu"
+            phase_num = 5
+            phase_title = "Persetujuan Tamu Diperlukan"
+            headline = f"Proposal Kamar Bersih {proposed} Telah Dikirimkan ke HP Tamu"
+            talking_point = f"Sistem tidak memindahkan tamu secara sepihak. Sebuah proposal kamar {proposed} yang terbukti bersih dikirim ke HP tamu. Di tahap ini, tamu cukup mengklik 'Setujui' di HP!"
+
+        elif status == "WAITING_HUMAN":
+            reasons = ", ".join(case.get("human_reason_codes", [])) if case else "COMPENSATION_LIMIT"
+            agent = "🛡️ Policy Guardrail & Manajer"
+            node = "🏢 FRONT_OFFICE (Meja Manajer)"
+            phase_num = 5
+            phase_title = "Satpam Kebijakan Mengunci Kasus"
+            headline = "Peringatan Kebijakan: Kompensasi Kamar Mewah Ditolak Otomatis!"
+            talking_point = f"Poin penting untuk penguji/dosen: Tamu meminta kamar Suite mewah gratis ({reasons}). Policy Guardrail mendeteksi pelanggaran batas wewenang otomatis dan langsung mengunci alur agar diputuskan oleh Manajer!"
+
+        elif status == "HUMAN_HANDLING":
+            agent = "👔 Manajer Hotel"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 5
+            phase_title = "Penanganan Manual Staf"
+            headline = "Manajer Hotel Sedang Mengambil Alih Kasus"
+            talking_point = "Manajer hotel meninjau berkas investigasi fisik dan membuat keputusan bisnis secara langsung."
+
+        elif action == "INSPECTION_RESULT" and ev_node == "OPERATIONS":
+            agent = "🤖 Mobile Investigator (MA-001)"
+            node = "🔧 OPERATIONS (Database Housekeeping)"
+            phase_num = 4
+            phase_title = "Hasil Inspeksi Fisik Selesai"
+            headline = "Inspeksi Selesai: Kamar Kotor Ditolak (R102), Kamar Bersih Lolos (R103)"
+            talking_point = "Agen menyelesaikan audit fisik di database Housekeeping: R102 terbukti kotor (DIRTY) sehingga otomatis gugur. Kamar R103 bersih (READY) dipilih untuk diajukan ke tamu."
+
+        elif ev_node == "OPERATIONS" and ev_agent == "MA-001":
+            agent = "🤖 Mobile Investigator (MA-001)"
+            node = "🔧 OPERATIONS (Node Operasional)"
+            phase_num = 4
+            phase_title = "Inspeksi Fisik di Lokasi"
+            headline = "Investigator Mendarat di Operations & Menginspeksi Database Housekeeping"
+            talking_point = "Mobile Investigator telah mendarat di node Operations. Agen langsung mengakses tabel kesiapan fisik kamar secara lokal tanpa membebani lalu lintas jaringan."
+
+        elif ev_type == "MIGRATION_DEPARTED" or mig_stage == "DEPARTED":
+            agent = "🤖 Mobile Investigator (MA-001)"
+            node = "🔄 IN-TRANSIT (Sedang Melintas Jaringan)"
+            phase_num = 3
+            phase_title = "Migrasi Antar-Node"
+            headline = "Investigator Dicabut dari Front Office & Melintasi Jaringan"
+            talking_point = "Perhatikan! Agen unregister dari Front Office. State koper bervalidasi kriptografi sedang berpindah melintasi node menuju server operasional hotel."
+
+        elif ev_type == "MIGRATION_PREPARED" or mig_stage == "PREPARED":
+            agent = "🤖 Mobile Investigator (MA-001)"
+            node = "🏢 FRONT_OFFICE (Pengepakan Koper)"
+            phase_num = 3
+            phase_title = "Pengepakan Koper State"
+            headline = "Mengemas State Kasus ke dalam Koper JSON Ber-hash SHA-256"
+            talking_point = "Di sinilah letak keunggulan Mobile Agent: alih-alih menarik seluruh database kamar ke Front Office, agen membungkus koper state bervalidasi SHA-256 untuk berangkat ke Operations."
+
+        elif action == "INSPECT_CANDIDATES" and ev_node == "FRONT_OFFICE":
+            agent = "🤖 Mobile Investigator (MA-001)"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 3
+            phase_title = "Inisialisasi Migrasi"
+            headline = "Mobile Investigator Menerima Tugas & Bersiap Bermigrasi"
+            talking_point = "Orchestrator menugaskan Mobile Investigator untuk menginspeksi kamar pengganti. Agen menginisialisasi protokol migrasi untuk berangkat ke node Operations."
+
+        elif step_index in (2, 3, 4, 5):
+            agent = "🧠 Orchestrator Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 2
+            phase_title = "Triase Kasus via Machine Learning"
+            headline = "Orchestrator Mengklasifikasikan Tingkat Keparahan Komplain"
+            talking_point = "Model Machine Learning (Logistic Regression) memprediksi bahwa keluhan fasilitas ini berisiko tinggi dan membutuhkan penanganan darurat perpindahan kamar."
+
+        elif step_index == 1:
+            agent = "🕵️ Scenario Scout Agent"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 2
+            phase_title = "Deteksi Niat Tamu"
+            headline = "Scenario Scout Mengekstrak Nomor Kamar & Jenis Masalah"
+            talking_point = "Scenario Scout membaca pesan tamu, memetakan kamar asal tamu, dan meneruskannya ke antrean Orchestrator."
+
+        else:
+            agent = "🛎️ Sistem Resepsionis Hotel"
+            node = "🏢 FRONT_OFFICE"
+            phase_num = 1
+            phase_title = "Penerimaan Komplain"
+            headline = "Keluhan Kerusakan Kamar Diterima dari Tamu"
+            talking_point = "Tamu melaporkan kerusakan fasilitas hotel. Sistem bersiap memulai penanganan multi-agent secara otomatis."
+
+    return {
+        "step_index": step_index,
+        "phase_num": phase_num,
+        "phase_title": phase_title,
+        "active_agent": agent,
+        "active_node": node,
+        "action_headline": headline,
+        "talking_point": talking_point,
+    }
+
+
+def render_presenter_hud(
+    snapshot: Dict[str, Any], simulation: Simulation, is_autoplay: bool
+) -> None:
+    """Renders the Live Presenter Mission Control HUD with speed slider and talking points."""
+    telemetry = get_presenter_telemetry(snapshot, simulation)
+    case = snapshot.get("case")
+    status = case.get("status") if case else "CREATED"
+    has_pending = snapshot.get("has_pending_work", False)
+    step_idx = snapshot.get("step_index", 0)
+
+    # Autoplay speed configuration
+    speed_options = {
+        3.5: "🐢 Santai (3.5s)",
+        2.0: "🚶 Nyaman (2.0s)",
+        1.0: "🐇 Cepat (1.0s)",
+    }
+    current_speed = st.session_state.get("autoplay_speed", 2.0)
+
+    with st.container(border=True):
+        # 1. Top Bar: Live Status & Controls
+        c_status, c_speed, c_btn = st.columns([5, 3, 4])
+
+        with c_status:
+            if is_autoplay:
+                badge_html = "<span style='background:#EF4444; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.8rem;'>🔴 LIVE AUTOPLAY</span>"
+            elif status == "WAITING_GUEST":
+                badge_html = "<span style='background:#3B82F6; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.8rem;'>🛎️ MENUNGGU TAMU</span>"
+            elif status == "WAITING_HUMAN":
+                badge_html = "<span style='background:#F59E0B; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.8rem;'>🚨 ESKALASI MANAJER</span>"
+            elif status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF"):
+                badge_html = "<span style='background:#10B981; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.8rem;'>🎉 KASUS SELESAI</span>"
+            else:
+                badge_html = "<span style='background:#64748B; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; font-size:0.8rem;'>⏸️ JEDA / STANDBY</span>"
+
+            st.markdown(
+                f"<div style='display:flex; align-items:center; gap:8px; margin-top:4px;'>"
+                f"{badge_html} "
+                f"<strong style='font-size:0.95rem; color:#1E293B;'>Langkah {step_idx} · {telemetry['phase_title']}</strong>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+        with c_speed:
+            speed_choice = st.selectbox(
+                "Tempo Putar Otomatis",
+                options=[2.0, 3.5, 1.0],
+                format_func=lambda s: speed_options.get(s, f"{s}s"),
+                index=[2.0, 3.5, 1.0].index(current_speed) if current_speed in [2.0, 3.5, 1.0] else 0,
+                key="autoplay_speed_selector",
+                label_visibility="collapsed",
+            )
+            if speed_choice != current_speed:
+                st.session_state["autoplay_speed"] = speed_choice
+
+        with c_btn:
+            b1, b2, b3 = st.columns(3)
+            with b1:
+                if is_autoplay:
+                    if st.button("⏸️ Jeda", key="hud_pause_btn", use_container_width=True):
+                        st.session_state["autoplay"] = False
+                        st.rerun()
+                else:
+                    can_play = has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING")
+                    if st.button(
+                        "▶️ Putar",
+                        key="hud_play_btn",
+                        type="primary" if can_play else "secondary",
+                        disabled=not can_play,
+                        use_container_width=True,
+                    ):
+                        st.session_state["autoplay"] = True
+                        st.rerun()
+            with b2:
+                can_step = has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING")
+                if st.button("⏭️ Maju", key="hud_step_btn", disabled=not can_step, use_container_width=True):
+                    simulation.step()
+                    st.rerun()
+            with b3:
+                if st.button("🔄 Ulang", key="hud_reset_btn", use_container_width=True):
+                    model = getattr(simulation, "model", None)
+                    scenario_id = snapshot.get("scenario_id", "S01")
+                    mode = snapshot.get("active_mode", "mobile")
+                    _start_scenario(model, scenario_id, mode)
+                    st.rerun()
+
+        st.divider()
+
+        # 2. Main Presenter Telemetry: Agent, Node, Headline
+        t_col1, t_col2 = st.columns([5, 7])
+        with t_col1:
+            st.markdown(
+                f"<div style='font-size:0.75rem; color:#64748B; font-weight:bold;'>PELAKU & LOKASI SAAT INI:</div>"
+                f"<div style='font-size:0.95rem; font-weight:bold; color:#1E3A8A; margin-top:2px;'>"
+                f"{telemetry['active_agent']}<br>"
+                f"<span style='font-size:0.8rem; font-weight:normal; color:#475569;'>Lokasi:</span> "
+                f"<span style='background:#E2E8F0; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-family:monospace; color:#0F172A;'>{telemetry['active_node']}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        with t_col2:
+            st.markdown(
+                f"<div style='font-size:0.75rem; color:#64748B; font-weight:bold;'>AKSI NYATA YANG TERJADI:</div>"
+                f"<div style='font-size:0.95rem; font-weight:bold; color:#0F172A; margin-top:2px; line-height:1.4;'>"
+                f"📌 {telemetry['action_headline']}"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+        # 3. Presenter Talking Point (The Golden Banner)
+        st.markdown(
+            f"""
+            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 6px; padding: 10px 14px; margin-top: 10px;">
+                <div style="font-size: 0.75rem; font-weight: bold; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px;">
+                    💡 Contekan Ucapan Presenter (Bisa Dibaca Langsung ke Dosen / Penguji):
+                </div>
+                <div style="font-size: 0.95rem; color: #78350F; margin-top: 4px; line-height: 1.5; font-style: italic;">
+                    “{telemetry['talking_point']}”
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # 4. Integrated 6-stage Visual Stepper
+        st.write("")
+        _render_live_flow_stepper(snapshot, override_phase=telemetry["phase_num"])
+
+
 def render_universal_action_bar(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
 ) -> None:
-    """Universal Action Bar & Dynamic Next-Action Guide on top of all tabs."""
+    """Universal Action Bar & Dynamic Presenter Mission Control on top of all tabs."""
     with st.expander("📖 Panduan Kilat 1-Menit (Cara Menggunakan & Demo Aplikasi)", expanded=False):
         st.markdown(
             """
             **3 Langkah Cepat Mengoperasikan Aplikasi Ini:**
             1. **Pilih Skenario Cerita:** Klik tombol cerita di bawah atau pilih di sidebar kiri (rekomendasi: **S01: AC Rusak** untuk kasus otomatis, atau **S02: Minta Kamar Mewah** untuk proteksi finansial).
-            2. **Amati Agen Bekerja:** Klik **`▶️ Putar Otomatis`** untuk menyaksikan agen melakukan triase, bermigrasi ke operasi, dan memeriksa fisik kamar secara bertahap.
+            2. **Amati Agen Bekerja:** Klik **`▶️ Putar`** di Spanduk Presenter untuk menyaksikan agen melakukan triase, bermigrasi ke operasi, dan memeriksa fisik kamar secara bertahap.
             3. **Beri Keputusan Tamu / Staf:**
                - Pada skenario S01: Klik **`✅ Setujui Pindah Kamar`** yang langsung muncul di layar Anda.
                - Pada skenario S02: Klik **`👤 Ambil Alih Kasus`** sebagai staf untuk mencegah kerugian hotel.
@@ -441,7 +785,10 @@ def render_universal_action_bar(
         is_autoplay = False
         st.session_state["autoplay"] = False
 
-    # 2. Universal Action Cards
+    # 2. Render Live Presenter HUD (Mission Control)
+    render_presenter_hud(snapshot, simulation, is_autoplay)
+
+    # 3. Universal Action Cards for Interactions
     if status == "WAITING_GUEST":
         proposed = case.get("proposed_room_id", "Kamar Baru")
         with st.container(border=True):
@@ -540,32 +887,10 @@ def render_universal_action_bar(
             f"atau memilih skenario cerita lain di sidebar."
         )
 
-    # 3. Playback Controls & Next Step Guide when work is pending
-    if has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        with st.container(border=True):
-            p1, p2, p3 = st.columns([6, 3, 3])
-            with p1:
-                st.markdown(
-                    "💡 **Langkah Selanjutnya:** Agen sedang memproses kasus. "
-                    "Gunakan tombol di samping untuk memutar otomatis atau melangkah bertahap:"
-                )
-            with p2:
-                if is_autoplay:
-                    if st.button("⏸️ Jeda (Pause)", key="universal_pause_btn", use_container_width=True):
-                        st.session_state["autoplay"] = False
-                        st.rerun()
-                else:
-                    if st.button("▶️ Putar Otomatis", key="universal_autoplay_btn", type="primary", use_container_width=True):
-                        st.session_state["autoplay"] = True
-                        st.rerun()
-            with p3:
-                if st.button("⏭️ Langkah Berikutnya", key="universal_quick_step", use_container_width=True):
-                    simulation.step()
-                    st.rerun()
-
     # 4. Trigger next step if autoplay is actively on
     if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        time.sleep(1.0)
+        speed = float(st.session_state.get("autoplay_speed", 2.0))
+        time.sleep(speed)
         simulation.step()
         st.rerun()
 
@@ -735,7 +1060,9 @@ def _decision_panel(snapshot: Dict[str, Any]) -> None:
     )
 
 
-def _render_live_flow_stepper(snapshot: Optional[Dict[str, Any]]) -> None:
+def _render_live_flow_stepper(
+    snapshot: Optional[Dict[str, Any]], override_phase: Optional[int] = None
+) -> None:
     """Render a dynamic 6-step progress stepper and real-time narration box."""
     if snapshot is None:
         return
@@ -748,7 +1075,9 @@ def _render_live_flow_stepper(snapshot: Optional[Dict[str, Any]]) -> None:
     current_phase = 1
     narrative = "Skenario diinisialisasi. Menunggu pemrosesan pesan tamu..."
 
-    if case is None:
+    if override_phase is not None:
+        current_phase = override_phase
+    elif case is None:
         current_phase = 1
         narrative = "📥 Skenario telah dipilih. Klik 'Langkah Berikutnya' untuk agen Scenario Scout membaca keluhan tamu."
     else:
@@ -1633,7 +1962,8 @@ def render_visual_node_map(snapshot: Optional[Dict[str, Any]]) -> None:
     op_border = "border: 2px solid #10B981; background: #ECFDF5;" if active_loc == "OPERATIONS" else "border: 1px solid #CBD5E1; background: #F8FAFC;"
     op_badge = "🟢 AGEN MEMERIKSA FISIK" if active_loc == "OPERATIONS" else "⚪ Standby"
 
-    transit_badge = "✈️ 🧳 KOPER TRANSIT (SHA-256 Validated)" if is_transit else "── Jalur Komunikasi Antar-Departemen ──"
+    transit_bg = "background: #FFEDD5; border: 2px dashed #EA580C; border-radius: 8px; padding: 12px 6px;" if is_transit else ""
+    transit_badge = "✈️ 🧳 KOPER TRANSIT<br><span style='font-size:0.7rem; font-weight:normal;'>(SHA-256 Validated)</span>" if is_transit else "── Pipa Komunikasi Antar-Departemen ──"
     transit_color = "#EA580C" if is_transit else "#94A3B8"
 
     col_fo, col_transit, col_op = st.columns([5, 2, 5])
@@ -1659,7 +1989,7 @@ def render_visual_node_map(snapshot: Optional[Dict[str, Any]]) -> None:
     with col_transit:
         st.markdown(
             f"""
-            <div style="text-align: center; padding-top: 35px; color: {transit_color}; font-weight: bold; font-size: 0.8rem;">
+            <div style="text-align: center; margin-top: 20px; color: {transit_color}; font-weight: bold; font-size: 0.8rem; {transit_bg}">
                 {transit_badge}
             </div>
             """,
