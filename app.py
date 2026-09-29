@@ -7,6 +7,7 @@ import streamlit as st
 from hotel_demo import ml
 from hotel_demo.ui import (
     render_autorun_tab,
+    render_comprehension_tab,
     render_executive_dashboard,
     render_guest_portal,
     render_header,
@@ -36,10 +37,11 @@ def main() -> None:
     # Universal Action Bar & Next Action Guide on top of all views
     render_universal_action_bar(snapshot, simulation)
 
-    # Clean Business-First Navigation: Business tabs first, Technical tab placed at the end for IT
-    tab_executive, tab_guest, tab_staff, tab_autorun, tab_technical = st.tabs(
+    # Clean Business-First Navigation with Dedicated Comprehension Suite
+    tab_executive, tab_comprehension, tab_guest, tab_staff, tab_autorun, tab_technical = st.tabs(
         [
             "🏨 Dasbor Eksekutif & Cerita Kasus",
+            "📖 Cara Kerja & Analogi Nyata",
             "🛎️ HP Tamu (Layanan Tamu)",
             "👔 Meja Kerja Staf Hotel",
             "🎬 Uji Seluruh Skenario",
@@ -49,6 +51,9 @@ def main() -> None:
 
     with tab_executive:
         render_executive_dashboard(snapshot, simulation, model)
+
+    with tab_comprehension:
+        render_comprehension_tab()
 
     with tab_guest:
         render_guest_portal(snapshot, simulation, model)
