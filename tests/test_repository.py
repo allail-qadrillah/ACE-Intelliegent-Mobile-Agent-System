@@ -187,3 +187,41 @@ def test_commit_refuses_mismatched_recheck_correlation():
         assert result["error"]["code"] == "STALE_ROOM_STATE"
     finally:
         front_office.close()
+
+
+def test_operations_ticket_transitions_and_unblock():
+    _, operations = _repos()
+    try:
+        created = operations.create_ticket(
+            case_id="CASE-999",
+            room_id="R101",
+            department="MAINTENANCE",
+            description="Perbaikan AC",
+            operation_key="ticket:CASE-999:maintenance",
+        )
+        assert created["ok"] is True
+        ticket_id = created["ticket"]["id"]
+        assert created["ticket"]["status"] == "PENDING"
+
+        # Invalid transition: PENDING -> DONE should be rejected
+        invalid = operations.update_ticket_status(ticket_id, "DONE")
+        assert invalid["ok"] is False
+        assert invalid["error"]["code"] == "INVALID_TRANSITION"
+
+        # Valid transition: PENDING -> IN_PROGRESS
+        prog = operations.update_ticket_status(ticket_id, "IN_PROGRESS")
+        assert prog["ok"] is True
+        assert prog["ticket"]["status"] == "IN_PROGRESS"
+
+        # Valid transition: IN_PROGRESS -> DONE
+        done = operations.update_ticket_status(ticket_id, "DONE")
+        assert done["ok"] is True
+        assert done["ticket"]["status"] == "DONE"
+
+        # Non-existent ticket
+        not_found = operations.update_ticket_status("TICKET-9999", "DONE")
+        assert not_found["ok"] is False
+        assert not_found["error"]["code"] == "NOT_FOUND"
+    finally:
+        operations.close()
+

@@ -809,10 +809,12 @@ def render_universal_action_bar(
             with col_act1:
                 if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
                     simulation.submit_guest_choice(True, actor="GUEST")
+                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}!", icon="🛎️")
                     st.rerun()
             with col_act2:
                 if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
                     simulation.submit_guest_choice(False, actor="GUEST")
+                    st.toast("❌ Tamu menolak tawaran kamar pengganti.", icon="🛎️")
                     st.rerun()
             with col_act3:
                 st.caption("ℹ️ Aksi cepat ini langsung terhubung tanpa perlu repot mencari tab Portal Tamu.")
@@ -836,8 +838,12 @@ def render_universal_action_bar(
             col_staff1, col_staff2 = st.columns([4, 8])
             with col_staff1:
                 if st.button("👤 Ambil Alih Kasus (Take Over)", key="universal_staff_takeover", type="primary", use_container_width=True):
-                    simulation.staff_take_over()
-                    st.rerun()
+                    out = simulation.staff_take_over()
+                    if out.get("ok"):
+                        st.toast("👤 Kasus berhasil diambil alih oleh Staf!", icon="👔")
+                        st.rerun()
+                    else:
+                        st.error(f"Gagal mengambil alih kasus: {out.get('reason')}")
             with col_staff2:
                 st.caption("ℹ️ Klik untuk mengambil alih kasus langsung sebagai manajer hotel.")
 
@@ -868,9 +874,45 @@ def render_universal_action_bar(
                 if st.button("✅ Tutup Kasus Resmi", key="universal_staff_close", type="primary", use_container_width=True):
                     out = simulation.staff_close_case(staff_note)
                     if out.get("ok"):
+                        st.toast("✅ Kasus resmi diselesaikan dan ditutup oleh Staf!", icon="📁")
                         st.rerun()
                     else:
                         st.error("Catatan staf wajib diisi.")
+
+    # Quick Work Order Ticket Actions in Universal Action Bar
+    active_tickets = [t for t in (simulation.list_tickets() if simulation else []) if t.get("status") in ("PENDING", "IN_PROGRESS")]
+    if active_tickets:
+        with st.container(border=True):
+            st.markdown(
+                """
+                <div style="background: #F0FDF4; border-left: 5px solid #16A34A; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;">
+                    <div style="font-size: 0.95rem; font-weight: bold; color: #166534;">
+                        📋 Papan Cepat: Tiket Tugas Fisik Staf Lapangan
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            for t_item in active_tickets:
+                tc1, tc2, tc3 = st.columns([6, 3, 3])
+                dept_ico = "🔧" if t_item.get("department") == "MAINTENANCE" else "🧹"
+                with tc1:
+                    st.markdown(f"**{dept_ico} {t_item['id']} — {t_item.get('department')}** · {t_item.get('description')} (Kamar **{t_item.get('room_id')}**)")
+                with tc2:
+                    st.markdown(f"Status: **`{t_item['status']}`**")
+                with tc3:
+                    if t_item["status"] == "PENDING":
+                        if st.button("▶️ Mulai Kerjakan", key=f"bar_ticket_start_{t_item['id']}", use_container_width=True):
+                            res = simulation.staff_update_ticket(t_item["id"], "IN_PROGRESS")
+                            if res.get("ok"):
+                                st.toast(f"🔧 Tiket {t_item['id']} status: IN_PROGRESS", icon="▶️")
+                                st.rerun()
+                    elif t_item["status"] == "IN_PROGRESS":
+                        if st.button("✔️ Tandai Selesai", key=f"bar_ticket_done_{t_item['id']}", type="primary", use_container_width=True):
+                            res = simulation.staff_update_ticket(t_item["id"], "DONE")
+                            if res.get("ok"):
+                                st.toast(f"✅ Tiket {t_item['id']} status: DONE!", icon="🎉")
+                                st.rerun()
 
     elif status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF", "CLOSED_GUEST_DECLINED", "FAILED"):
         assigned = case.get("assigned_room_id") or case.get("original_room_id")
@@ -1287,13 +1329,17 @@ def render_simulation_tab(
                 if ticket["status"] == "PENDING" and columns[1].button(
                     "Mulai", key=f"ticket_start_{ticket['id']}"
                 ):
-                    simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
-                    st.rerun()
+                    res = simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
+                    if res.get("ok"):
+                        st.toast(f"Tiket {ticket['id']} -> IN_PROGRESS")
+                        st.rerun()
                 if ticket["status"] == "IN_PROGRESS" and columns[2].button(
                     "Selesai", key=f"ticket_done_{ticket['id']}"
                 ):
-                    simulation.staff_update_ticket(ticket["id"], "DONE")
-                    st.rerun()
+                    res = simulation.staff_update_ticket(ticket["id"], "DONE")
+                    if res.get("ok"):
+                        st.toast(f"Tiket {ticket['id']} -> DONE")
+                        st.rerun()
 
 
 def render_trace_tab(
@@ -1848,7 +1894,8 @@ def render_staff_portal(
         return
 
     case = snapshot.get("case")
-    tickets = snapshot.get("tickets", [])
+    # Always fetch live tickets from simulation if available
+    tickets = simulation.list_tickets() if simulation else snapshot.get("tickets", [])
 
     # Metrics Overview
     pending_tickets = [t for t in tickets if t["status"] == "PENDING"]
@@ -1885,14 +1932,23 @@ def render_staff_portal(
 
             if case.get("status") == "WAITING_HUMAN":
                 if st.button("👤 Ambil Alih Kasus (Take Over)", key="staff_portal_takeover", type="primary"):
-                    simulation.staff_take_over()
-                    st.rerun()
+                    out = simulation.staff_take_over()
+                    if out.get("ok"):
+                        st.toast(f"👤 Kasus {case.get('case_id')} berhasil diambil alih oleh Staf!", icon="👔")
+                        st.rerun()
+                    else:
+                        st.error(f"Gagal mengambil alih kasus: {out.get('reason')}")
             else:
                 st.markdown("**Status: Kasus Sedang Ditangani oleh Anda**")
-                staff_note = st.text_area("Catatan Penyelesaian Staf (Wajib):", key="staff_portal_note")
+                staff_note = st.text_area(
+                    "Catatan Penyelesaian Staf (Wajib):",
+                    value="Keluhan telah diselesaikan langsung oleh staf hotel sesuai SOP.",
+                    key="staff_portal_note",
+                )
                 if st.button("✅ Selesaikan & Tutup Kasus", key="staff_portal_close", type="primary"):
                     out = simulation.staff_close_case(staff_note)
                     if out.get("ok"):
+                        st.toast(f"✅ Kasus {case.get('case_id')} resmi ditutup oleh Staf!", icon="📁")
                         st.success("Kasus berhasil ditutup!")
                         st.rerun()
                     else:
@@ -1917,12 +1973,22 @@ def render_staff_portal(
                 with c3:
                     if ticket["status"] == "PENDING":
                         if st.button("▶️ Mulai Kerjakan", key=f"staff_portal_start_{ticket['id']}", use_container_width=True):
-                            simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
-                            st.rerun()
+                            res = simulation.staff_update_ticket(ticket["id"], "IN_PROGRESS")
+                            if res.get("ok"):
+                                st.toast(f"🔧 Tiket {ticket['id']} status: Sedang Dikerjakan (IN_PROGRESS)", icon="▶️")
+                                st.rerun()
+                            else:
+                                err_msg = res.get("error", {}).get("message", "Gagal memperbarui status tiket.")
+                                st.error(f"❌ {err_msg}")
                     elif ticket["status"] == "IN_PROGRESS":
                         if st.button("✔️ Tandai Selesai", key=f"staff_portal_done_{ticket['id']}", type="primary", use_container_width=True):
-                            simulation.staff_update_ticket(ticket["id"], "DONE")
-                            st.rerun()
+                            res = simulation.staff_update_ticket(ticket["id"], "DONE")
+                            if res.get("ok"):
+                                st.toast(f"✅ Tiket {ticket['id']} Selesai Dikerjakan (DONE)!", icon="🎉")
+                                st.rerun()
+                            else:
+                                err_msg = res.get("error", {}).get("message", "Gagal menyelesaikan tiket.")
+                                st.error(f"❌ {err_msg}")
                     else:
                         st.markdown("✅ **Selesai**")
     else:
