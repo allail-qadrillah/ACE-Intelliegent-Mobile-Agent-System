@@ -2194,34 +2194,26 @@ def render_simulation_center(
         if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
             in_transit_badge = '<div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; border: 1px solid #FDE68A;">⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations memeriksa fisik kamar...</div>'
 
-        chat_html = (
-            f'<div style="border-radius: 14px; border: 1px solid #CBD5E1; box-shadow: 0 4px 15px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; margin-bottom: 12px;">'
-            f'<div style="background: #075E54; color: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">'
-            f'<div style="display: flex; align-items: center; gap: 10px;">'
-            f'<div style="width: 36px; height: 36px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🏨</div>'
-            f'<div>'
-            f'<div style="font-weight: bold; font-size: 0.92rem; color: white;">Hotel Nusantara Concierge</div>'
-            f'<div style="font-size: 0.70rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</div>'
-            f'</div></div>'
-            f'<div style="font-size: 0.72rem; background: rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 10px; color: white;">Tamu: {room_id}</div>'
-            f'</div>'
-            f'<div style="padding: 14px 12px; min-height: 190px; display: flex; flex-direction: column; gap: 10px;">'
-            f'<div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px;">HARI INI</div>'
-            f'<div style="align-self: flex-start; max-width: 85%; background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">'
-            f'<div style="font-size: 0.68rem; font-weight: 600; color: #0284C7; margin-bottom: 1px;">👤 Anda (Kamar {room_id})</div>'
-            f'<div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">"{guest_msg}"</div>'
-            f'<div style="text-align: right; font-size: 0.60rem; color: #94A3B8; margin-top: 3px;">14:02 ✓✓</div>'
-            f'</div>'
-            f'{in_transit_badge}'
-            f'<div style="align-self: flex-end; max-width: 85%; background: #DCF8C6; padding: 8px 12px; border-radius: 12px 0 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">'
-            f'<div style="font-size: 0.68rem; font-weight: 600; color: #065F46; margin-bottom: 1px;">🤖 Nusantara AI Concierge</div>'
-            f'<div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">{ai_reply}</div>'
-            f'<div style="text-align: right; font-size: 0.60rem; color: #059669; margin-top: 3px;">14:02 ✓✓</div>'
-            f'</div>'
-            f'</div>'
-            f'</div>'
-        )
-        st.markdown(chat_html, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(
+                f"""<div style="background: #075E54; color: white; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+<div><strong style="font-size: 0.95rem;">🏨 Hotel Nusantara Concierge</strong><br>
+<span style="font-size: 0.72rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</span></div>
+<span style="font-size: 0.72rem; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px;">Tamu: {room_id}</span>
+</div>""",
+                unsafe_allow_html=True,
+            )
+
+            with st.chat_message("user", avatar="👤"):
+                st.caption(f"Tamu (Kamar {room_id})")
+                st.markdown(f'**"{guest_msg}"**')
+
+            if in_transit_badge:
+                st.info("⚡ **Investigasi Otonom:** Agen bermigrasi ke Node Operations untuk memeriksa fisik kamar...")
+
+            with st.chat_message("assistant", avatar="🏨"):
+                st.caption("Nusantara AI Concierge")
+                st.markdown(ai_reply)
 
         # Quick Guest Reply confirmation buttons when waiting guest
         if status == "WAITING_GUEST":
