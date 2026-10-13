@@ -6,6 +6,7 @@ import streamlit as st
 
 from hotel_demo import ml
 from hotel_demo.ui import (
+    render_autorun_tab,
     render_header,
     render_sidebar,
     render_simulation_center,
@@ -48,9 +49,10 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    tab_sim, tab_staff, tab_eval = st.tabs(
+    tab_sim, tab_autorun, tab_staff, tab_eval = st.tabs(
         [
             "🎯 Simulasi & Layanan Tamu (Live Demo)",
+            "⚡ Uji Otomatis Skenario (Autorun)",
             "👔 Meja Kerja Staf Hotel",
             "📊 Evaluasi, Bisnis & Audit DB",
         ]
@@ -58,6 +60,9 @@ def main() -> None:
 
     with tab_sim:
         render_simulation_center(snapshot, simulation, model)
+
+    with tab_autorun:
+        render_autorun_tab(model)
 
     with tab_staff:
         render_staff_portal(snapshot, simulation)

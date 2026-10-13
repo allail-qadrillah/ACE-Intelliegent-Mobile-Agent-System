@@ -2120,7 +2120,8 @@ def render_simulation_center(
         with btn_cols[1]:
             if st.button("⏩ Langkah", key="step_button", disabled=not has_pending, use_container_width=True):
                 if simulation:
-                    simulation.step()
+                    with st.spinner("🤖 Agen sedang memproses langkah..."):
+                        simulation.step()
                     st.rerun()
         with btn_cols[2]:
             if st.button("⚡ Selesai", key="sim_center_finish", disabled=not has_pending, use_container_width=True):
@@ -2191,51 +2192,36 @@ def render_simulation_center(
 
         in_transit_badge = ""
         if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
-            in_transit_badge = """
-            <div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; border: 1px solid #FDE68A;">
-                ⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations memeriksa fisik kamar...
-            </div>
-            """
+            in_transit_badge = '<div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; border: 1px solid #FDE68A;">⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations memeriksa fisik kamar...</div>'
 
-        st.markdown(
-            f"""
-            <div style="border-radius: 14px; border: 1px solid #CBD5E1; box-shadow: 0 4px 15px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 12px;">
-                <!-- Header -->
-                <div style="background: #075E54; color: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🏨</div>
-                        <div>
-                            <div style="font-weight: bold; font-size: 0.92rem; color: white;">Hotel Nusantara Concierge</div>
-                            <div style="font-size: 0.70rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</div>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.72rem; background: rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 10px; color: white;">
-                        Tamu: {room_id}
-                    </div>
-                </div>
-                <!-- Chat Canvas -->
-                <div style="padding: 14px 12px; min-height: 190px; display: flex; flex-direction: column; gap: 10px;">
-                    <div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px;">
-                        HARI INI
-                    </div>
-                    <!-- Guest Bubble -->
-                    <div style="align-self: flex-start; max-width: 85%; background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                        <div style="font-size: 0.68rem; font-weight: 600; color: #0284C7; margin-bottom: 1px;">👤 Anda (Kamar {room_id})</div>
-                        <div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">"{guest_msg}"</div>
-                        <div style="text-align: right; font-size: 0.60rem; color: #94A3B8; margin-top: 3px;">14:02 ✓✓</div>
-                    </div>
-                    {in_transit_badge}
-                    <!-- Agent Bubble -->
-                    <div style="align-self: flex-end; max-width: 85%; background: #DCF8C6; padding: 8px 12px; border-radius: 12px 0 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                        <div style="font-size: 0.68rem; font-weight: 600; color: #065F46; margin-bottom: 1px;">🤖 Nusantara AI Concierge</div>
-                        <div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">{ai_reply}</div>
-                        <div style="text-align: right; font-size: 0.60rem; color: #059669; margin-top: 3px;">14:02 ✓✓</div>
-                    </div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
+        chat_html = (
+            f'<div style="border-radius: 14px; border: 1px solid #CBD5E1; box-shadow: 0 4px 15px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif; margin-bottom: 12px;">'
+            f'<div style="background: #075E54; color: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">'
+            f'<div style="display: flex; align-items: center; gap: 10px;">'
+            f'<div style="width: 36px; height: 36px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🏨</div>'
+            f'<div>'
+            f'<div style="font-weight: bold; font-size: 0.92rem; color: white;">Hotel Nusantara Concierge</div>'
+            f'<div style="font-size: 0.70rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</div>'
+            f'</div></div>'
+            f'<div style="font-size: 0.72rem; background: rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 10px; color: white;">Tamu: {room_id}</div>'
+            f'</div>'
+            f'<div style="padding: 14px 12px; min-height: 190px; display: flex; flex-direction: column; gap: 10px;">'
+            f'<div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px;">HARI INI</div>'
+            f'<div style="align-self: flex-start; max-width: 85%; background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">'
+            f'<div style="font-size: 0.68rem; font-weight: 600; color: #0284C7; margin-bottom: 1px;">👤 Anda (Kamar {room_id})</div>'
+            f'<div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">"{guest_msg}"</div>'
+            f'<div style="text-align: right; font-size: 0.60rem; color: #94A3B8; margin-top: 3px;">14:02 ✓✓</div>'
+            f'</div>'
+            f'{in_transit_badge}'
+            f'<div style="align-self: flex-end; max-width: 85%; background: #DCF8C6; padding: 8px 12px; border-radius: 12px 0 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">'
+            f'<div style="font-size: 0.68rem; font-weight: 600; color: #065F46; margin-bottom: 1px;">🤖 Nusantara AI Concierge</div>'
+            f'<div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">{ai_reply}</div>'
+            f'<div style="text-align: right; font-size: 0.60rem; color: #059669; margin-top: 3px;">14:02 ✓✓</div>'
+            f'</div>'
+            f'</div>'
+            f'</div>'
         )
+        st.markdown(chat_html, unsafe_allow_html=True)
 
         # Quick Guest Reply confirmation buttons when waiting guest
         if status == "WAITING_GUEST":
@@ -2307,11 +2293,12 @@ def render_simulation_center(
         with st.expander("⚖️ Metrik Keputusan & Ambang Batas Risiko", expanded=False):
             _decision_panel(snapshot)
 
-    # Autoplay runner loop
+    # Autoplay runner loop with loading condition
     if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        speed = float(st.session_state.get("autoplay_speed", 1.8))
-        time.sleep(speed)
-        simulation.step()
+        with st.spinner("🤖 Agen bergerak otomatis ke langkah berikutnya..."):
+            speed = float(st.session_state.get("autoplay_speed", 1.8))
+            time.sleep(speed)
+            simulation.step()
         st.rerun()
 
 
