@@ -527,7 +527,7 @@ def get_presenter_telemetry(
             phase_num = 6
             phase_title = "Persetujuan Diterima — Finalisasi Kunci"
             headline = f"Tamu Menyetujui Pindah ke {proposed}. Sistem Mengunci Transaksi Database."
-            talking_point = "Persetujuan tamu telah tercatat! Sistem melakukan sinkronisasi database kamar dan mengalokasikan kunci kamar secara atomik."
+            talking_point = "Konsensus tamu berhasil divalidasi. Sistem mengeksekusi komitmen database secara atomik guna mengalokasikan kamar baru dan memutasi status reservasi tanpa risiko konflik konkurensi."
 
         elif status == "WAITING_GUEST":
             proposed = case.get("proposed_room_id", "R103")
@@ -536,7 +536,7 @@ def get_presenter_telemetry(
             phase_num = 5
             phase_title = "Persetujuan Tamu Diperlukan"
             headline = f"Proposal Kamar Bersih {proposed} Telah Dikirimkan ke HP Tamu"
-            talking_point = f"Sistem tidak memindahkan tamu secara sepihak. Sebuah proposal kamar {proposed} yang terbukti bersih dikirim ke HP tamu. Di tahap ini, tamu cukup mengklik 'Setujui' di HP!"
+            talking_point = f"Sistem menerapkan prinsip human-in-the-loop: pemindahan kamar tidak dipaksakan sepihak, melainkan disajikan sebagai proposal terverifikasi ke perangkat tamu untuk memperoleh persetujuan eksplisit."
 
         elif status == "WAITING_HUMAN":
             reasons = ", ".join(case.get("human_reason_codes", [])) if case else "COMPENSATION_LIMIT"
@@ -545,7 +545,7 @@ def get_presenter_telemetry(
             phase_num = 5
             phase_title = "Satpam Kebijakan Mengunci Kasus"
             headline = "Peringatan Kebijakan: Kompensasi Kamar Mewah Ditolak Otomatis!"
-            talking_point = f"Poin penting untuk penguji/dosen: Tamu meminta kamar Suite mewah gratis ({reasons}). Policy Guardrail mendeteksi pelanggaran batas wewenang otomatis dan langsung mengunci alur agar diputuskan oleh Manajer!"
+            talking_point = f"Policy Guardrail mengintervensi alur kerja: terdeteksi eskalasi kompensasi di luar ambang batas kewenangan ({reasons}). Sistem secara preventif menahan mutasi otomatis dan mengalihkan kasus ke otorisasi manajerial guna memproteksi margin pendapatan hotel."
 
         elif status == "HUMAN_HANDLING":
             agent = "👔 Manajer Hotel"
@@ -553,7 +553,7 @@ def get_presenter_telemetry(
             phase_num = 5
             phase_title = "Penanganan Manual Staf"
             headline = "Manajer Hotel Sedang Mengambil Alih Kasus"
-            talking_point = "Manajer hotel meninjau berkas investigasi fisik dan membuat keputusan bisnis secara langsung."
+            talking_point = "Peralihan kontrol ke supervisor hotel (Managerial Gate): berkas audit investigasi fisik dan rekaman bukti disajikan secara transparan untuk penetapan keputusan diskresioner."
 
         elif action == "INSPECTION_RESULT" and ev_node == "OPERATIONS":
             agent = "🤖 Mobile Investigator (MA-001)"
@@ -561,7 +561,7 @@ def get_presenter_telemetry(
             phase_num = 4
             phase_title = "Hasil Inspeksi Fisik Selesai"
             headline = "Inspeksi Selesai: Kamar Kotor Ditolak (R102), Kamar Bersih Lolos (R103)"
-            talking_point = "Agen menyelesaikan audit fisik di database Housekeeping: R102 terbukti kotor (DIRTY) sehingga otomatis gugur. Kamar R103 bersih (READY) dipilih untuk diajukan ke tamu."
+            talking_point = "Verifikasi integritas fisik berhasil: Mobile Investigator mendeteksi kamar R102 kotor (DIRTY) sehingga otomatis digugurkan; kamar R103 terbukti bersih dan siap huni (READY) sehingga dipilih secara presisi."
 
         elif ev_node == "OPERATIONS" and ev_agent == "MA-001":
             agent = "🤖 Mobile Investigator (MA-001)"
@@ -569,7 +569,7 @@ def get_presenter_telemetry(
             phase_num = 4
             phase_title = "Inspeksi Fisik di Lokasi"
             headline = "Investigator Mendarat di Operations & Menginspeksi Database Housekeeping"
-            talking_point = "Mobile Investigator telah mendarat di node Operations. Agen langsung mengakses tabel kesiapan fisik kamar secara lokal tanpa membebani lalu lintas jaringan."
+            talking_point = "Eksekusi komputasi lokal di node Operations: Mobile Investigator mengakses langsung basis data Housekeeping secara terisolasi tanpa membebani lalu lintas jaringan antar-node."
 
         elif ev_type == "MIGRATION_DEPARTED" or mig_stage == "DEPARTED":
             agent = "🤖 Mobile Investigator (MA-001)"
@@ -577,7 +577,7 @@ def get_presenter_telemetry(
             phase_num = 3
             phase_title = "Migrasi Antar-Node"
             headline = "Investigator Dicabut dari Front Office & Melintasi Jaringan"
-            talking_point = "Perhatikan! Agen unregister dari Front Office. State koper bervalidasi kriptografi sedang berpindah melintasi node menuju server operasional hotel."
+            talking_point = "Protokol migrasi aktif: agen melepaskan registrasi dari node Front Office. State koper terenkapsulasi dengan validasi hash SHA-256 sedang ditransmisikan menuju node Operations secara aman."
 
         elif ev_type == "MIGRATION_PREPARED" or mig_stage == "PREPARED":
             agent = "🤖 Mobile Investigator (MA-001)"
@@ -585,7 +585,7 @@ def get_presenter_telemetry(
             phase_num = 3
             phase_title = "Pengepakan Koper State"
             headline = "Mengemas State Kasus ke dalam Koper JSON Ber-hash SHA-256"
-            talking_point = "Di sinilah letak keunggulan Mobile Agent: alih-alih menarik seluruh database kamar ke Front Office, agen membungkus koper state bervalidasi SHA-256 untuk berangkat ke Operations."
+            talking_point = "Keunggulan paradigma Mobile Agent: alih-alih mentransfer volume data inventaris besar ke Front Office (RPC konvensional), agen memaketkan state komputasi dalam koper data ringan ber-hash SHA-256 untuk dieksekusi di sumber data."
 
         elif action == "INSPECT_CANDIDATES" and ev_node == "FRONT_OFFICE":
             agent = "🤖 Mobile Investigator (MA-001)"
@@ -593,7 +593,7 @@ def get_presenter_telemetry(
             phase_num = 3
             phase_title = "Inisialisasi Migrasi"
             headline = "Mobile Investigator Menerima Tugas & Bersiap Bermigrasi"
-            talking_point = "Orchestrator menugaskan Mobile Investigator untuk menginspeksi kamar pengganti. Agen menginisialisasi protokol migrasi untuk berangkat ke node Operations."
+            talking_point = "Inisiasi investigasi terdistribusi: Orchestrator menugaskan Mobile Investigator untuk memverifikasi kesiapan fisik kamar melalui penyiapan checkpoint state dan otorisasi lintas-domain."
 
         elif step_index in (2, 3, 4, 5):
             agent = "🧠 Orchestrator Agent"
@@ -601,7 +601,7 @@ def get_presenter_telemetry(
             phase_num = 2
             phase_title = "Triase Kasus via Machine Learning"
             headline = "Orchestrator Mengklasifikasikan Tingkat Keparahan Komplain"
-            talking_point = "Model Machine Learning (Logistic Regression) memprediksi bahwa keluhan fasilitas ini berisiko tinggi dan membutuhkan penanganan darurat perpindahan kamar."
+            talking_point = "Triase prediktif berbasis Machine Learning: model mengevaluasi parameter komplain dan mengklasifikasikan probabilitas eskalasi, mengarahkan alur kerja ke penanganan prioritas tinggi secara objektif."
 
         elif step_index == 1:
             agent = "🕵️ Scenario Scout Agent"
@@ -609,7 +609,7 @@ def get_presenter_telemetry(
             phase_num = 2
             phase_title = "Deteksi Niat Tamu"
             headline = "Scenario Scout Mengekstrak Nomor Kamar & Jenis Masalah"
-            talking_point = "Scenario Scout membaca pesan tamu, memetakan kamar asal tamu, dan meneruskannya ke antrean Orchestrator."
+            talking_point = "Ekstraksi entitas & klasifikasi intent: Scenario Scout mengidentifikasi nomor kamar, kategori keluhan, dan urgensi insiden sebelum menyusun tiket kerja terstruktur ke antrean Orchestrator."
 
         else:
             agent = "🛎️ Sistem Resepsionis Hotel"
@@ -617,7 +617,7 @@ def get_presenter_telemetry(
             phase_num = 1
             phase_title = "Penerimaan Komplain"
             headline = "Keluhan Kerusakan Kamar Diterima dari Tamu"
-            talking_point = "Tamu melaporkan kerusakan fasilitas hotel. Sistem bersiap memulai penanganan multi-agent secara otomatis."
+            talking_point = "Penerimaan keluhan pelanggan: sistem menginisialisasi alur orkestrasi multi-agent terdistribusi guna merespons komplain secara otonom dalam toleransi SLA ketat."
 
     return {
         "step_index": step_index,
@@ -738,14 +738,14 @@ def render_presenter_hud(
                 unsafe_allow_html=True,
             )
 
-        # 3. Presenter Talking Point (The Golden Banner)
+        # 3. Presenter Talking Point (Executive Insight Banner)
         st.markdown(
             f"""
-            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 12px 16px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="font-size: 0.78rem; font-weight: 700; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
-                    🎓 Narasi Presentasi & Poin Penjelasan Dosen:
+            <div style="background: #F8FAFC; border-left: 4px solid #2563EB; border-radius: 8px; padding: 12px 16px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                    💡 Analisis Arsitektural & Justifikasi Bisnis (Executive Insight):
                 </div>
-                <div style="font-size: 0.95rem; color: #78350F; line-height: 1.5; font-style: italic;">
+                <div style="font-size: 0.94rem; color: #1E293B; line-height: 1.5; font-weight: 500;">
                     “{telemetry['talking_point']}”
                 </div>
             </div>
@@ -878,9 +878,14 @@ def render_universal_action_bar(
                     st.rerun()
         with gt_c3:
             with st.container(border=True):
-                st.markdown("**📊 Langkah 3: Evaluasi & Arsitektur**")
-                st.caption("Arahkan audiens ke tab **Evaluasi, Bisnis & Audit DB** untuk menunjukkan ROI finansial dan bukti benchmark payload.")
-                st.info("👉 Buka Tab 3 untuk bukti kuantitatif.")
+                st.markdown("**📊 Langkah 3: Validasi Empiris & ROI Bisnis**")
+                st.caption(
+                    "Tunjukkan pembuktian keunggulan sistem pada **Tab 3 (Evaluasi, Bisnis & Audit DB)**:\n\n"
+                    "• **Efisiensi Jaringan:** Pemotongan payload transmisi hingga **64.9%** (1.47 KB vs 4.20 KB) via migrasi koper state SHA-256.\n"
+                    "• **Dampak Finansial:** Resolusi instan < 1 menit (hemat ~35 menit/kasus) & proteksi kebocoran biaya (*Zero Cost Leakage*).\n"
+                    "• **Audit Kriptografis:** Integritas state transparan, rollback atomik, dan kepatuhan guardrail 100% lokal."
+                )
+                st.info("👉 **Buka Tab 3** untuk verifikasi tabel benchmark empiris, audit DB & kalkulator ROI.")
 
     if snapshot is None or simulation is None:
         return
@@ -2365,11 +2370,11 @@ def render_simulation_center(
             )
         st.markdown(
             f"""
-            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 10px 14px; margin-top: 8px;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px;">
-                    🎓 Narasi Presentasi & Poin Penjelasan Dosen:
+            <div style="background: #F8FAFC; border-left: 4px solid #2563EB; border-radius: 8px; padding: 12px 16px; margin-top: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.5px;">
+                    💡 Analisis Arsitektural & Justifikasi Bisnis (Executive Insight):
                 </div>
-                <div style="font-size: 0.92rem; color: #78350F; line-height: 1.4; font-style: italic; margin-top: 2px;">
+                <div style="font-size: 0.94rem; color: #1E293B; line-height: 1.5; font-weight: 500; margin-top: 3px;">
                     “{telemetry['talking_point']}”
                 </div>
             </div>
