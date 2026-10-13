@@ -758,22 +758,129 @@ def render_presenter_hud(
         _render_live_flow_stepper(snapshot, override_phase=telemetry["phase_num"])
 
 
+def _render_mutation_diff_card(snapshot: Dict[str, Any], simulation: Simulation) -> None:
+    """Renders visual before vs after mutation summary when scenario finishes."""
+    case = snapshot.get("case") or {}
+    sid = snapshot.get("scenario_id", "S01")
+    status = case.get("status", "")
+    orig_room = case.get("original_room_id", "R101")
+    assigned_room = case.get("assigned_room_id") or case.get("proposed_room_id") or orig_room
+
+    with st.container(border=True):
+        st.markdown("##### 🔄 Ringkasan Mutasi Database Reservasi (Before vs After)")
+
+        diff_c1, diff_c2, diff_c3 = st.columns(3)
+
+        with diff_c1:
+            st.markdown(
+                f"""
+                <div style="background:#F1F5F9; border-radius:8px; padding:10px 12px; border-left:4px solid #64748B;">
+                    <div style="font-size:0.72rem; font-weight:bold; color:#475569;">KONDISI SEBELUM (BEFORE)</div>
+                    <div style="font-size:0.95rem; font-weight:bold; color:#0F172A; margin-top:4px;">
+                        Kamar Asal: <b>{orig_room}</b>
+                    </div>
+                    <div style="font-size:0.8rem; color:#475569; margin-top:2px; line-height:1.4;">
+                        Status: 👤 Dihuni Tamu<br>
+                        Kondisi: ⚠️ AC Bocor / Komplain
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with diff_c2:
+            if sid == "S01" and status == "DIGITAL_COMPLETED":
+                action_badge = "🔄 Relokasi Kamar Setara"
+                action_desc = "Tamu menyetujui kamar R103. Transaksi commit atomik."
+                leakage_text = "Rp 0 (Zero Cost Leakage)"
+            elif sid == "S02":
+                action_badge = "🛡️ Policy Guardrail Enforced"
+                action_desc = "Permintaan upgrade Deluxe ilegal dikunci deterministik."
+                leakage_text = "Rp 250.000 / Malam Terselamatkan"
+            elif sid == "S03":
+                action_badge = "💳 Dispute Review Staf"
+                action_desc = "Sengketa minibar ditahan untuk investigasi manajer."
+                leakage_text = "Folio Aman dari Modifikasi Liar"
+            else:
+                action_badge = "⚡ Pemrosesan Selesai"
+                action_desc = f"Alur ditangani dengan status {status}."
+                leakage_text = "SOP Terpenuhi"
+
+            st.markdown(
+                f"""
+                <div style="background:#ECFDF5; border-radius:8px; padding:10px 12px; border-left:4px solid #10B981;">
+                    <div style="font-size:0.72rem; font-weight:bold; color:#047857;">AKSI SISTEM & GUARDRAIL</div>
+                    <div style="font-size:0.95rem; font-weight:bold; color:#065F46; margin-top:4px;">
+                        {action_badge}
+                    </div>
+                    <div style="font-size:0.8rem; color:#065F46; margin-top:2px; line-height:1.4;">
+                        {action_desc}<br>
+                        Proteksi: <b>{leakage_text}</b>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with diff_c3:
+            if sid == "S01" and status == "DIGITAL_COMPLETED":
+                after_title = f"Kamar Baru: <b>{assigned_room}</b>"
+                after_desc = "Status: 👤 Resmi Terisi (Kunci Aktif)<br>Kamar Asal: 🔧 Kosong & Tiket Servis AC"
+            elif status == "CLOSED_BY_STAFF":
+                after_title = f"Kamar Tamu: <b>{orig_room}</b>"
+                after_desc = "Status: 👤 Ditutup oleh Manajer Hotel<br>Catatan Resmi Tersimpan di Audit"
+            else:
+                after_title = f"Kamar Resmi: <b>{assigned_room}</b>"
+                after_desc = "Status: ✅ Database Sinkron<br>Integritas Transaksi SQLite Valid"
+
+            st.markdown(
+                f"""
+                <div style="background:#EFF6FF; border-radius:8px; padding:10px 12px; border-left:4px solid #3B82F6;">
+                    <div style="font-size:0.72rem; font-weight:bold; color:#1D4ED8;">KONDISI SESUDAH (AFTER)</div>
+                    <div style="font-size:0.95rem; font-weight:bold; color:#1E3A8A; margin-top:4px;">
+                        {after_title}
+                    </div>
+                    <div style="font-size:0.8rem; color:#1E3A8A; margin-top:2px; line-height:1.4;">
+                        {after_desc}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
 def render_universal_action_bar(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
 ) -> None:
     """Universal Action Bar & Dynamic Presenter Mission Control on top of all tabs."""
-    with st.expander("📖 Panduan Kilat 1-Menit (Cara Menggunakan & Demo Aplikasi)", expanded=False):
+    with st.expander("🎙️ Panduan Presentasi 3-Menit (3-Step Guided Demo)", expanded=False):
         st.markdown(
-            """
-            **3 Langkah Cepat Mengoperasikan Aplikasi Ini:**
-            1. **Pilih Skenario Cerita:** Klik tombol cerita di bawah atau pilih di sidebar kiri (rekomendasi: **S01: AC Rusak** untuk kasus otomatis, atau **S02: Minta Kamar Mewah** untuk proteksi finansial).
-            2. **Amati Agen Bekerja:** Klik **`▶️ Putar`** di Spanduk Presenter untuk menyaksikan agen melakukan triase, bermigrasi ke operasi, dan memeriksa fisik kamar secara bertahap.
-            3. **Beri Keputusan Tamu / Staf:**
-               - Pada skenario S01: Klik **`✅ Setujui Pindah Kamar`** yang langsung muncul di layar Anda.
-               - Pada skenario S02: Klik **`👤 Ambil Alih Kasus`** sebagai staf untuk mencegah kerugian hotel.
-               - Buka tab **🏨 Ringkasan Eksekutif & ROI** untuk melihat kalkulator nilai bisnis nyata!
-            """
+            "Gunakan alur panduan 3 langkah di bawah ini untuk mendemonstrasikan keunggulan sistem secara terstruktur di depan dosen/penguji:"
         )
+        gt_c1, gt_c2, gt_c3 = st.columns(3)
+        with gt_c1:
+            with st.container(border=True):
+                st.markdown("**❄️ Langkah 1: Otomasi & Migrasi**")
+                st.caption("Kasus S01: AC rusak, agen bermigrasi ke operasi, tolak kamar kotor R102, alokasikan kamar bersih R103.")
+                if st.button("▶️ Putar Demo 1 (S01)", key="guided_tour_s01", use_container_width=True, type="primary"):
+                    model = getattr(simulation, "model", None) if simulation else None
+                    _start_scenario(model, "S01", "mobile")
+                    st.session_state["autoplay"] = True
+                    st.rerun()
+        with gt_c2:
+            with st.container(border=True):
+                st.markdown("**🛡️ Langkah 2: Proteksi Biaya (Guardrail)**")
+                st.caption("Kasus S02: Tamu minta kamar Deluxe mewah gratis, Policy Guardrail mengunci otomasi agar tidak bocor biaya.")
+                if st.button("▶️ Putar Demo 2 (S02)", key="guided_tour_s02", use_container_width=True):
+                    model = getattr(simulation, "model", None) if simulation else None
+                    _start_scenario(model, "S02", "mobile")
+                    st.session_state["autoplay"] = True
+                    st.rerun()
+        with gt_c3:
+            with st.container(border=True):
+                st.markdown("**📊 Langkah 3: Evaluasi & Arsitektur**")
+                st.caption("Arahkan audiens ke tab **Evaluasi, Bisnis & Audit DB** untuk menunjukkan ROI finansial dan bukti benchmark payload.")
+                st.info("👉 Tunjukkan Tab 3 untuk bukti kuantitatif.")
 
     if snapshot is None or simulation is None:
         st.info(
@@ -946,6 +1053,7 @@ def render_universal_action_bar(
             f"👉 Anda dapat melihat evaluasi efisiensi di tab **🏨 Ringkasan Eksekutif & ROI**, "
                 f"atau memilih skenario cerita lain di Dasbor Eksekutif."
         )
+        _render_mutation_diff_card(snapshot, simulation)
 
     # 4. Trigger next step if autoplay is actively on
     if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
@@ -1804,25 +1912,44 @@ def render_trace_tab(
     else:
         st.caption("Belum ada pesan.")
 
-    st.markdown("#### Tabel Event")
+    st.markdown("#### Tabel Event (Jejak Audit)")
     events = [event.to_dict() for event in simulation.events]
     if events:
-        st.dataframe(
-            [
-                {
-                    "seq": event["seq"],
-                    "step": event["step_index"],
-                    "event_type": event["event_type"],
-                    "agent_id": event["agent_id"],
-                    "node_id": event["node_id"],
-                    "migration_id": event["migration_id"],
-                    "reason_codes": ", ".join(event["reason_codes"]),
-                }
-                for event in events
-            ],
-            use_container_width=True,
-            height=280,
+        event_filter = st.radio(
+            "Filter Jenis Event:",
+            options=["Semua Event", "🚀 Migrasi Koper", "❌ Penolakan / Guardrail", "🛎️ Tamu & Staf"],
+            horizontal=True,
+            key="event_trail_filter_radio",
+            label_visibility="collapsed",
         )
+        if event_filter == "🚀 Migrasi Koper":
+            filtered_events = [e for e in events if "MIGRAT" in e.get("event_type", "").upper() or e.get("migration_id")]
+        elif event_filter == "❌ Penolakan / Guardrail":
+            filtered_events = [e for e in events if e.get("reason_codes") or "REJECT" in e.get("event_type", "").upper() or "POLICY" in e.get("event_type", "").upper()]
+        elif event_filter == "🛎️ Tamu & Staf":
+            filtered_events = [e for e in events if any(k in e.get("event_type", "").upper() for k in ("GUEST", "STAFF", "HUMAN", "TICKET"))]
+        else:
+            filtered_events = events
+
+        if filtered_events:
+            st.dataframe(
+                [
+                    {
+                        "seq": event["seq"],
+                        "step": event["step_index"],
+                        "event_type": event["event_type"],
+                        "agent_id": event["agent_id"],
+                        "node_id": event["node_id"],
+                        "migration_id": event["migration_id"],
+                        "reason_codes": ", ".join(event["reason_codes"]),
+                    }
+                    for event in filtered_events
+                ],
+                use_container_width=True,
+                height=280,
+            )
+        else:
+            st.info(f"Tidak ada event untuk filter '{event_filter}'.")
     else:
         st.caption("Belum ada event.")
 
@@ -2345,7 +2472,7 @@ def render_simulation_center(
             st.markdown(
                 f"""<div style="background: #075E54; color: white; padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
 <div><strong style="font-size: 0.95rem;">🏨 Hotel Nusantara Concierge</strong><br>
-<span style="font-size: 0.72rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</span></div>
+<span style="font-size: 0.72rem; color: #A7F3D0; display: inline-flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:8px; height:8px; background:#34D399; border-radius:50%; box-shadow:0 0 6px #34D399;"></span> Online · ACE Mobile Agent</span></div>
 <span style="font-size: 0.72rem; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px;">Tamu: {room_id}</span>
 </div>""",
                 unsafe_allow_html=True,
