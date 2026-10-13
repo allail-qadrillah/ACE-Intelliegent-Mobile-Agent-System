@@ -947,17 +947,47 @@ def render_universal_action_bar(
 
 
 def render_sidebar(model: Any) -> None:
+    from .repository import load_seed
+
     scenarios = load_scenarios()
+    sim = st.session_state.get("simulation")
+    if sim:
+        rooms_data = sim.front_office.dump().get("rooms", [])
+        readiness_data = sim.operations.dump().get("room_readiness", [])
+        source_label = "Live Simulasi"
+    else:
+        seed = load_seed()
+        rooms_data = seed.get("rooms", [])
+        readiness_data = seed.get("room_readiness", [])
+        source_label = "Database Seed"
+
+    readiness_map = {r.get("room_id"): r for r in readiness_data}
+    total_rooms = len(rooms_data)
+    occupied_count = sum(1 for r in rooms_data if r.get("occupied_by"))
+    occupancy_pct = (occupied_count / total_rooms * 100) if total_rooms > 0 else 0.0
+    clean_ready_count = sum(
+        1
+        for r in rooms_data
+        if not r.get("occupied_by")
+        and readiness_map.get(r.get("id"), {}).get("cleanliness") == "clean"
+        and not readiness_map.get(r.get("id"), {}).get("maintenance_blocked")
+    )
+    dirty_count = sum(1 for r in readiness_data if r.get("cleanliness") == "dirty")
+    maint_count = sum(1 for r in readiness_data if r.get("maintenance_blocked"))
+
     with st.sidebar:
         st.markdown("### 🏨 Hotel Nusantara")
         st.caption("Sistem Otomasi Operasional & Layanan Tamu")
 
         with st.container(border=True):
             st.markdown("**📊 Ringkasan Properti Hari Ini:**")
-            st.markdown("- Total Kamar: **150 Kamar**")
-            st.markdown("- Terisi (Occupancy): **128 Kamar (85%)**")
-            st.markdown("- Kamar Bersih Siap: **18 Kamar**")
-            st.markdown("- Kamar Perlu Dicuci: **4 Kamar**")
+            st.markdown(f"- Total Kamar: **{total_rooms} Kamar**")
+            st.markdown(f"- Terisi (Occupancy): **{occupied_count} Kamar ({occupancy_pct:.0f}%)**")
+            st.markdown(f"- Kamar Bersih Siap: **{clean_ready_count} Kamar**")
+            st.markdown(f"- Kamar Perlu Dicuci: **{dirty_count} Kamar**")
+            if maint_count > 0:
+                st.markdown(f"- Kamar Maintenance: **{maint_count} Kamar**")
+            st.caption(f"⚡ *Tersinkronisasi {source_label} (SQLite)*")
 
         st.markdown("**💡 Panduan Cepat:**")
         st.info("Pilih salah satu **Kartu Kasus Nyata** di layar utama untuk menjalankan simulasi otomatis.")
@@ -1211,6 +1241,239 @@ def _render_live_flow_stepper(
     )
 
 
+def _render_live_migration_topology(snapshot: Optional[Dict[str, Any]]) -> None:
+    """Render an interactive 3-column architecture topology showing live node execution & state migration."""
+    if snapshot is None:
+        return
+
+    mode = snapshot.get("active_mode") or snapshot.get("mode") or "mobile"
+    migration = snapshot.get("migration")
+    mig_stage = migration.get("stage") if migration else None
+    mig_size = migration.get("checkpoint_size", 412) if migration else 0
+    mig_src = migration.get("source_node", "FRONT_OFFICE") if migration else "FRONT_OFFICE"
+    mig_dst = migration.get("destination_node", "OPERATIONS") if migration else "OPERATIONS"
+
+    # Identify agents in each node
+    agents = snapshot.get("agents", [])
+    fo_agents = [
+        a for a in agents
+        if (a.get("location") or a.get("node_id")) == "FRONT_OFFICE" and not a.get("archived")
+    ]
+    ops_agents = [
+        a for a in agents
+        if (a.get("location") or a.get("node_id")) == "OPERATIONS" and not a.get("archived")
+    ]
+
+    is_in_transit = mig_stage in ("INITIATED", "PREPARED", "DEPARTED")
+    is_migrated_ops = (len(ops_agents) > 0 and not is_in_transit) or mig_stage in (
+        "RECEIVED",
+        "VERIFIED",
+        "EXECUTED",
+    )
+
+    if is_in_transit:
+        fo_active = False
+        ops_active = False
+    elif is_migrated_ops:
+        fo_active = False
+        ops_active = True
+    else:
+        fo_active = True
+        ops_active = False
+
+    st.markdown("##### 🌐 Topologi Jaringan & Posisi Agen (Real-Time)")
+
+    t_cols = st.columns([4, 4, 4])
+
+    with t_cols[0]:
+        fo_border = (
+            "border: 2px solid #2563EB; background: #EFF6FF; box-shadow: 0 0 10px rgba(37,99,235,0.2);"
+            if fo_active
+            else "border: 1px solid #CBD5E1; background: #F8FAFC;"
+        )
+        fo_status = "🟢 AKTIF MENGEKSEKUSI" if fo_active else "⚪ SIAGA (IDLE)"
+        fo_color = "#1D4ED8" if fo_active else "#64748B"
+        fo_agent_names = ", ".join([a.get("agent_id") for a in fo_agents]) or "(Agen berpindah / siaga)"
+        st.markdown(
+            f"""
+            <div style="{fo_border} border-radius: 12px; padding: 12px 14px; min-height: 140px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <strong style="color: #1E293B; font-size: 0.95rem;">🖥️ Node FRONT_OFFICE</strong>
+                    <span style="font-size: 0.72rem; font-weight: bold; color: {fo_color};">{fo_status}</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #475569; margin-bottom: 4px;">
+                    <strong>Database:</strong> SQLite In-Memory (Node 1)
+                </div>
+                <div style="font-size: 0.72rem; color: #64748B; margin-bottom: 6px;">
+                    Tabel: <code>rooms</code>, <code>reservations</code>, <code>folio</code>, <code>faq</code>
+                </div>
+                <div style="font-size: 0.75rem; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #E2E8F0; color: #1E293B;">
+                    🤖 <strong>Agen di Node:</strong> {fo_agent_names}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with t_cols[1]:
+        if is_in_transit:
+            br_border = "border: 2px dashed #F59E0B; background: #FFFBEB; box-shadow: 0 0 12px rgba(245,158,11,0.3);"
+            br_title = f"🚀 SEDANG BERPINDAH ({mig_src} ➔ {mig_dst})"
+            br_title_color = "#B45309"
+            br_desc = f"📦 Payload: <b>{mig_size} Bytes</b> · ⏱️ Latensi: <b>12ms</b><br>🔒 Verifikasi SHA-256 Checkpoint Lulus"
+        elif mode == "mobile":
+            if mig_stage in ("RECEIVED", "VERIFIED", "COMMITTED", "EXECUTED"):
+                br_border = "border: 1px solid #10B981; background: #ECFDF5;"
+                br_title = "✅ Migrasi State Selesai"
+                br_title_color = "#047857"
+                br_desc = f"Agen telah berpindah ke {mig_dst}. Eksekusi inspeksi lokal tanpa RPC bolak-balik."
+            else:
+                br_border = "border: 1px dashed #94A3B8; background: #F8FAFC;"
+                br_title = "🌐 Saluran Migrasi ACE-MAMP Siaga"
+                br_title_color = "#475569"
+                br_desc = "Jalur transfer snapshot state lokal & verifikasi anti-replay aktif."
+        else:
+            br_border = "border: 1px solid #EF4444; background: #FEF2F2;"
+            br_title = "📡 Mode Static Agent"
+            br_title_color = "#B91C1C"
+            br_desc = "Tidak ada migrasi; seluruh inspeksi memanggil kueri RPC berulang melewati jaringan."
+
+        st.markdown(
+            f"""
+            <div style="{br_border} border-radius: 12px; padding: 12px 14px; min-height: 140px; text-align: center;">
+                <div style="font-size: 0.75rem; font-weight: bold; color: {br_title_color}; margin-bottom: 6px;">
+                    {br_title}
+                </div>
+                <div style="font-size: 0.78rem; color: #334155; line-height: 1.4; margin-top: 8px;">
+                    {br_desc}
+                </div>
+                <div style="font-size: 0.68rem; color: #64748B; margin-top: 8px;">
+                    Protokol: <code>ACE-MAMP v1.0</code>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with t_cols[2]:
+        ops_border = (
+            "border: 2px solid #10B981; background: #ECFDF5; box-shadow: 0 0 10px rgba(16,185,129,0.2);"
+            if ops_active
+            else "border: 1px solid #CBD5E1; background: #F8FAFC;"
+        )
+        ops_status = "🟢 AKTIF INSPEKSI" if ops_active else "⚪ SIAGA (IDLE)"
+        ops_color = "#047857" if ops_active else "#64748B"
+        ops_agent_names = ", ".join([a.get("agent_id") for a in ops_agents]) or "(Menunggu kedatangan agen)"
+        st.markdown(
+            f"""
+            <div style="{ops_border} border-radius: 12px; padding: 12px 14px; min-height: 140px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <strong style="color: #1E293B; font-size: 0.95rem;">🖥️ Node OPERATIONS</strong>
+                    <span style="font-size: 0.72rem; font-weight: bold; color: {ops_color};">{ops_status}</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #475569; margin-bottom: 4px;">
+                    <strong>Database:</strong> SQLite In-Memory (Node 2)
+                </div>
+                <div style="font-size: 0.72rem; color: #64748B; margin-bottom: 6px;">
+                    Tabel: <code>room_readiness</code>, <code>housekeeping_tickets</code>
+                </div>
+                <div style="font-size: 0.75rem; background: white; padding: 4px 8px; border-radius: 6px; border: 1px solid #E2E8F0; color: #1E293B;">
+                    🤖 <strong>Agen di Node:</strong> {ops_agent_names}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def _render_interactive_room_map(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+) -> None:
+    """Render interactive room grid map reflecting live SQLite database status."""
+    from .repository import load_seed
+
+    if simulation:
+        rooms = simulation.front_office.dump().get("rooms", [])
+        readiness = simulation.operations.dump().get("room_readiness", [])
+    else:
+        seed = load_seed()
+        rooms = seed.get("rooms", [])
+        readiness = seed.get("room_readiness", [])
+
+    readiness_map = {r.get("room_id"): r for r in readiness}
+
+    st.markdown("##### 🏢 Denah Status Kamar Hotel (Live Real-Time)")
+    r_cols = st.columns(len(rooms) if rooms else 4)
+
+    for i, r in enumerate(rooms):
+        rid = r.get("id")
+        rtype = r.get("room_type", "standard").capitalize()
+        rate = r.get("nightly_rate", 500000)
+        occ = r.get("occupied_by")
+        rm_info = readiness_map.get(rid, {})
+        clean = rm_info.get("cleanliness", "clean")
+        maint = rm_info.get("maintenance_blocked", False)
+
+        if occ and maint:
+            badge = "🔴 TERISI & AC RUSAK"
+            badge_color = "#DC2626"
+            bg = "#FEF2F2"
+            border = "2px solid #EF4444"
+            desc = f"Dihuni: <b>{occ}</b><br>⚠️ Kendala: AC Bocor"
+            icon = "❄️⚠️"
+        elif occ:
+            badge = "👤 TERISI (TAMU)"
+            badge_color = "#2563EB"
+            bg = "#EFF6FF"
+            border = "2px solid #3B82F6"
+            desc = f"Dihuni: <b>{occ}</b><br>✨ Kamar Siap & Nyaman"
+            icon = "🏨"
+        elif maint:
+            badge = "🔧 KOSONG (PERLU SERVIS)"
+            badge_color = "#D97706"
+            bg = "#FFFBEB"
+            border = "1px solid #F59E0B"
+            desc = "Status: Kosong<br>Menunggu Teknisi AC"
+            icon = "🛠️"
+        elif clean == "dirty":
+            badge = "🧹 KOTOR (PERLU CUCI)"
+            badge_color = "#EA580C"
+            bg = "#FFF7ED"
+            border = "1px solid #FB923C"
+            desc = "Status: Kosong<br>Antrean Housekeeping"
+            icon = "🛏️"
+        else:
+            badge = "✨ BERSIH & SIAP HUNI"
+            badge_color = "#059669"
+            bg = "#ECFDF5"
+            border = "2px solid #10B981"
+            desc = "Status: Kosong<br>Kamar Pengganti Ideal"
+            icon = "✅"
+
+        with r_cols[i]:
+            st.markdown(
+                f"""
+                <div style="background: {bg}; border: {border}; border-radius: 12px; padding: 10px 8px; text-align: center; min-height: 130px;">
+                    <div style="font-size: 1.05rem; font-weight: bold; color: #1E293B;">
+                        {icon} {rid}
+                    </div>
+                    <div style="font-size: 0.72rem; color: #64748B; margin-top: 1px;">
+                        Tipe {rtype} · Rp{rate:,.0f}
+                    </div>
+                    <div style="margin: 6px 0;">
+                        <span style="font-size: 0.65rem; font-weight: bold; background: white; padding: 2px 5px; border-radius: 6px; color: {badge_color}; border: 1px solid #E2E8F0;">
+                            {badge}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.72rem; color: #334155; margin-top: 4px; line-height: 1.3;">
+                        {desc}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
 def render_simulation_tab(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
 ) -> None:
@@ -1234,6 +1497,12 @@ def render_simulation_tab(
         st.markdown("**Pesan tamu:** (belum ada kasus)")
 
     _decision_panel(snapshot)
+
+    st.divider()
+    _render_live_migration_topology(snapshot)
+
+    st.divider()
+    _render_interactive_room_map(snapshot, simulation)
 
     st.divider()
     left, right = st.columns(2)
@@ -1462,14 +1731,83 @@ def render_trace_tab(
             use_container_width=True,
         )
 
-    st.markdown("#### Snapshot Database")
+    st.markdown("#### 🗄️ Struktur & Data Database (Dual-Node SQLite)")
+    st.caption("Pemisahan fisik in-memory antara node **Front Office** dan **Operations**.")
+
+    # 1. Diagram Skema Database
+    with st.expander("🗺️ Diagram Skema Database Dual-Node (ER Diagram & Topologi)", expanded=True):
+        from pathlib import Path
+        img_path = Path("docs/diagrams/database_schema_diagram.png")
+        if img_path.exists():
+            st.image(str(img_path), caption="Diagram Relasi Entitas & Isolasi Node Database (Dual-Node SQLite)")
+        else:
+            st.info("Diagram skema tersimpan di folder `docs/diagrams/database_schema_diagram.md`.")
+
+    # 2. Inisiasi Data Seeding Awal Hotel
+    with st.expander("🌱 Inisiasi Data Seeding Awal (Hotel Seed)", expanded=False):
+        st.markdown("**Konfigurasi Data Seeding Awal Hotel Nusantara Demo (`data/hotel_seed.json`):**")
+        seed_data = simulation.front_office_seed if hasattr(simulation, "front_office_seed") else None
+        # Load seed data langsung
+        from .repository import load_seed
+        seed = load_seed()
+
+        col_seed_fo, col_seed_ops = st.columns(2)
+        with col_seed_fo:
+            st.markdown("##### 🏢 Seeding Node Front Office")
+            st.markdown(f"**Nama Hotel:** `{seed.get('hotel_name', 'Hotel Nusantara Demo')}`")
+            st.markdown("**Tabel `guests` (Tamu Terdaftar):**")
+            st.dataframe(seed.get("guests", []), use_container_width=True, hide_index=True)
+            st.markdown("**Tabel `rooms` (Kamar Front Office):**")
+            st.dataframe(seed.get("rooms", []), use_container_width=True, hide_index=True)
+            st.markdown("**Tabel `reservations` (Reservasi Aktif):**")
+            st.dataframe(seed.get("reservations", []), use_container_width=True, hide_index=True)
+            st.markdown("**Tabel `folio_entries` (Tagihan Folio Tamu):**")
+            st.dataframe(seed.get("folio_entries", []), use_container_width=True, hide_index=True)
+            st.markdown("**Tabel `faq` (Knowledge Base Concierge):**")
+            st.dataframe(seed.get("faq", []), use_container_width=True, hide_index=True)
+
+        with col_seed_ops:
+            st.markdown("##### ⚙️ Seeding Node Operations")
+            st.markdown("**Tabel `room_readiness` (Kesiapan Fisik Kamar):**")
+            readiness_df = []
+            for item in seed.get("room_readiness", []):
+                readiness_df.append({
+                    "room_id": item["room_id"],
+                    "cleanliness": "✨ Clean" if item["cleanliness"] == "clean" else "🧹 Dirty",
+                    "maintenance_blocked": "⛔ Rusak (AC/Maint)" if item["maintenance_blocked"] else "✅ Normal",
+                    "evidence_version": item["evidence_version"]
+                })
+            st.dataframe(readiness_df, use_container_width=True, hide_index=True)
+            st.info(
+                "💡 **Catatan Logika Bisnis:**\n"
+                "- Kamar **R101**: Tempat tamu menginap (AC rusak / maintenance blocked).\n"
+                "- Kamar **R102**: Kosong di Front Office, tetapi di Operations masih **Dirty** (kotor).\n"
+                "- Kamar **R103**: Kosong di Front Office, dan di Operations terverifikasi **Clean** (layak huni).\n"
+                "- Kamar **R201**: Tipe Deluxe (Rp750.000), butuh otorisasi upgrade staf."
+            )
+
+    # 3. Snapshot Live Database Aktif
+    st.markdown("#### ⚡ Status Data Database Saat Ini (Live SQLite Dump)")
     db_columns = st.columns(2)
     with db_columns[0]:
-        with st.expander("Front Office DB", expanded=False):
-            st.json(simulation.front_office.dump())
+        with st.expander("🏢 Front Office Live DB (Tabel Aktif)", expanded=False):
+            fo_dump = simulation.front_office.dump()
+            for t_name, rows in fo_dump.items():
+                if rows:
+                    st.markdown(f"**Tabel `{t_name}` ({len(rows)} baris):**")
+                    st.dataframe(rows, use_container_width=True, hide_index=True)
+                else:
+                    st.caption(f"Tabel `{t_name}`: Kosong")
     with db_columns[1]:
-        with st.expander("Operations DB", expanded=False):
-            st.json(simulation.operations.dump())
+        with st.expander("⚙️ Operations Live DB (Tabel Aktif)", expanded=False):
+            ops_dump = simulation.operations.dump()
+            for t_name, rows in ops_dump.items():
+                if rows:
+                    st.markdown(f"**Tabel `{t_name}` ({len(rows)} baris):**")
+                    st.dataframe(rows, use_container_width=True, hide_index=True)
+                else:
+                    st.caption(f"Tabel `{t_name}`: Kosong")
+
 
     st.download_button(
         "Unduh Log JSON",
@@ -1808,44 +2146,104 @@ def render_guest_portal(
     guest_msg = case.get("guest_message") if case else "Belum ada pesan."
     status = case.get("status") if case else "CREATED"
 
-    st.markdown("### 📱 Percakapan & Status Layanan")
+    st.markdown("### 📱 Percakapan Tamu & Asisten AI (WhatsApp Omnichannel)")
 
-    # Guest chat bubble
+    # Prepare chat context
     room_id = case.get("original_room_id", "R101") if case else "R101"
+    proposed_id = case.get("proposed_room_id") if case else None
+    assigned_id = case.get("assigned_room_id") if case else None
+    mig_info = snapshot.get("migration")
+    mig_stage = mig_info.get("stage") if mig_info else None
+    step_idx = snapshot.get("step_index", 0)
+    res_text = _result_text(snapshot)
+
+    # Determine AI Concierge response text
+    if status == "WAITING_GUEST":
+        ai_reply = (
+            f"Kamar Anda {room_id} terdeteksi mengalami kendala teknis (AC bocor). "
+            f"Saya telah memeriksa langsung ke departemen Housekeeping dan menemukan kamar pengganti setara yaitu "
+            f"<strong>Kamar {proposed_id}</strong> yang sudah <strong>BERSIH & SIAP HUNI</strong> tanpa biaya tambahan. "
+            f"Mohon konfirmasi apakah Anda berkenan pindah?"
+        )
+    elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
+        ai_reply = (
+            "Permintaan Anda (upgrade gratis / sengketa tagihan) memerlukan persetujuan manajerial. "
+            "Keluhan Anda telah kami teruskan langsung ke Manajer Hotel untuk peninjauan khusus dan perlindungan tarif."
+        )
+    elif status == "DIGITAL_COMPLETED":
+        if assigned_id:
+            ai_reply = (
+                f"🎉 Pemindahan kamar ke <strong>Kamar {assigned_id}</strong> telah resmi diproses di sistem Front Office. "
+                f"Kunci kamar baru siap diambil di resepsionis. Selamat beristirahat!"
+            )
+        else:
+            ai_reply = res_text or "Permintaan Anda telah berhasil diselesaikan oleh asisten hotel."
+    elif status == "CLOSED_GUEST_DECLINED":
+        ai_reply = "Baik, tawaran pindah kamar dibatalkan sesuai permintaan Anda. Tiket perbaikan teknisi tetap kami pantau."
+    elif status == "CLOSED_BY_STAFF":
+        note = case.get("closed_note") or "Selesai ditangani"
+        ai_reply = f"Kasus Anda telah selesai ditangani oleh Staf Hotel. Catatan staf: <em>{note}</em>"
+    elif step_idx > 0:
+        ai_reply = "Saya sedang memproses keluhan Anda dan berkoordinasi dengan departemen terkait..."
+    else:
+        ai_reply = "Halo! Saya Asisten AI Hotel Nusantara. Ada yang bisa saya bantu terkait kamar atau layanan hotel Anda?"
+
+    # WhatsApp Smartphone Mockup
+    in_transit_badge = ""
+    if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
+        in_transit_badge = """
+        <div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.74rem; padding: 6px 14px; border-radius: 12px; border: 1px solid #FDE68A; margin: 4px 0;">
+            ⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations untuk memeriksa fisik kamar & SOP...
+        </div>
+        """
+
     st.markdown(
         f"""
-        <div style="background:#E3F2FD; border-left: 5px solid #2196F3; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;">
-            <div style="font-size: 0.8rem; font-weight: bold; color: #1976D2;">👤 Anda (Tamu - Kamar {room_id}):</div>
-            <div style="font-size: 1rem; color: #333; margin-top: 4px;">"{guest_msg}"</div>
+        <div style="max-width: 820px; margin: 0 auto; border-radius: 16px; border: 1px solid #CBD5E1; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 16px;">
+            <!-- Header -->
+            <div style="background: #075E54; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🏨</div>
+                    <div>
+                        <div style="font-weight: bold; font-size: 0.98rem; color: white;">Hotel Nusantara Concierge</div>
+                        <div style="font-size: 0.74rem; color: #A7F3D0;">🟢 Online · Didukung ACE Mobile Agent</div>
+                    </div>
+                </div>
+                <div style="font-size: 0.78rem; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 12px; color: white;">
+                    Tamu: G001 (Kamar {room_id})
+                </div>
+            </div>
+            <!-- Chat Canvas -->
+            <div style="padding: 18px 16px; min-height: 200px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.70rem; padding: 3px 10px; border-radius: 8px; font-weight: 500;">
+                    HARI INI
+                </div>
+                <!-- Guest Bubble -->
+                <div style="align-self: flex-start; max-width: 82%; background: white; padding: 10px 14px; border-radius: 0 14px 14px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.72rem; font-weight: 600; color: #0284C7; margin-bottom: 2px;">👤 Anda (Tamu Kamar {room_id})</div>
+                    <div style="font-size: 0.92rem; color: #1E293B; line-height: 1.4;">"{guest_msg}"</div>
+                    <div style="text-align: right; font-size: 0.62rem; color: #94A3B8; margin-top: 4px;">14:02 ✓✓</div>
+                </div>
+                {in_transit_badge}
+                <!-- Agent Bubble -->
+                <div style="align-self: flex-end; max-width: 82%; background: #DCF8C6; padding: 10px 14px; border-radius: 14px 0 14px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                    <div style="font-size: 0.72rem; font-weight: 600; color: #065F46; margin-bottom: 2px;">🤖 Nusantara AI Concierge</div>
+                    <div style="font-size: 0.92rem; color: #1E293B; line-height: 1.4;">{ai_reply}</div>
+                    <div style="text-align: right; font-size: 0.62rem; color: #059669; margin-top: 4px;">14:02 ✓✓</div>
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # Status Response Card
-    res_text = _result_text(snapshot)
-
     if status == "WAITING_GUEST":
-        st.markdown(
-            """
-            <div style="background:#FFF9C4; border-left: 5px solid #FBC02D; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;">
-                <div style="font-size: 0.8rem; font-weight: bold; color: #F57F17;">🤖 Asisten AI Hotel:</div>
-                <div style="font-size: 1rem; color: #333; margin-top: 4px;">
-                    Kami telah menginspeksi kamar pengganti yang setara dan bersih. Mohon konfirmasi apakah Anda berkenan pindah.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
         with st.container(border=True):
-            st.markdown(f"#### 🏨 Tawaran Kamar Pengganti: **{case.get('proposed_room_id')}**")
+            st.markdown(f"#### 🏨 Konfirmasi Tamu: Tawaran Kamar Pengganti **{case.get('proposed_room_id')}**")
             p_cols = st.columns(3)
             p_cols[0].metric("Kamar Asal", case.get("original_room_id"))
             p_cols[1].metric("Kamar Pengganti", case.get("proposed_room_id"))
             p_cols[2].metric("Biaya Tambahan", "Rp0 (Gratis Setara)")
-
-            st.write("Kamar telah diverifikasi oleh Mobile Investigator di node Operations dalam status bersih dan siap huni.")
 
             b_cols = st.columns(2)
             if b_cols[0].button(
@@ -1884,8 +2282,11 @@ def render_guest_portal(
     elif status == "CLOSED_BY_STAFF":
         st.success(f"✅ Kasus telah diselesaikan dan ditutup oleh Staf Hotel. Catatan: {case.get('closed_note') or '-'}")
 
-    else:
-        st.info(f"⏳ Status saat ini: `{status}`. Sistem sedang memproses...")
+    # Visual Room Map & Architecture Topology in Expander
+    with st.expander("🏢 Lihat Denah Status Kamar & Topologi Agen (Real-Time)", expanded=False):
+        _render_interactive_room_map(snapshot, simulation)
+        st.divider()
+        _render_live_migration_topology(snapshot)
 
     # Advance step helper if pending
     if snapshot.get("has_pending_work"):
@@ -2346,6 +2747,46 @@ def render_executive_dashboard(
                     st.caption(f"Kamar Resmi Akhir: **{case.get('assigned_room_id')}** (Tarif tetap terjaga)")
         else:
             st.caption("Kasus baru diinisialisasi; menunggu langkah agen...")
+
+    # Struktur & Data Seeding Awal Hotel
+    st.divider()
+    st.markdown("### 🗄️ Struktur Database & Inisiasi Data Seeding Hotel")
+    st.caption("Arsitektur dua node SQLite lokal in-memory (`FRONT_OFFICE` & `OPERATIONS`) dan data awal kamar Hotel Nusantara.")
+
+    with st.expander("🗺️ Lihat Diagram Skema Database (ER Diagram)", expanded=False):
+        from pathlib import Path
+        img_p = Path("docs/diagrams/database_schema_diagram.png")
+        if img_p.exists():
+            st.image(str(img_p), caption="Diagram Relasi Entitas & Isolasi Node Database")
+        else:
+            st.info("Dokumen diagram skema tersimpan di folder `docs/diagrams/database_schema_diagram.md`.")
+
+    with st.expander("🌱 Lihat Data Seeding Awal Hotel (Kamar, Reservasi & Kesiapan)", expanded=False):
+        from .repository import load_seed
+        seed = load_seed()
+        s_c1, s_c2 = st.columns(2)
+        with s_c1:
+            st.markdown("##### 🏢 Data Front Office")
+            st.markdown(f"**Hotel:** `{seed.get('hotel_name', 'Hotel Nusantara Demo')}`")
+            st.markdown("**Kamar di Front Office:**")
+            st.dataframe(seed.get("rooms", []), use_container_width=True, hide_index=True)
+            st.markdown("**Reservasi Aktif:**")
+            st.dataframe(seed.get("reservations", []), use_container_width=True, hide_index=True)
+            st.markdown("**Tagihan Folio Awal:**")
+            st.dataframe(seed.get("folio_entries", []), use_container_width=True, hide_index=True)
+        with s_c2:
+            st.markdown("##### ⚙️ Data Kesiapan Fisik (Operations)")
+            st.markdown("**Status Kesiapan Kamar (Housekeeping/Maintenance):**")
+            r_list = []
+            for item in seed.get("room_readiness", []):
+                r_list.append({
+                    "Kamar": item["room_id"],
+                    "Kebersihan": "✨ Bersih (Clean)" if item["cleanliness"] == "clean" else "🧹 Kotor (Dirty)",
+                    "Status Fisik": "⛔ AC Rusak / Dikerjakan" if item["maintenance_blocked"] else "✅ Siap Huni",
+                    "Versi": item["evidence_version"]
+                })
+            st.dataframe(r_list, use_container_width=True, hide_index=True)
+            st.caption("ℹ️ *Catatan:* Kamar R102 kosong di FO namun kotor di Operations; R103 kosong dan bersih; R201 tipe Deluxe (upgrade berbayar).")
 
 
 def render_business_suite(
