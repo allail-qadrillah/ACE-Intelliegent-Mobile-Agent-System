@@ -852,10 +852,10 @@ def _render_mutation_diff_card(snapshot: Dict[str, Any], simulation: Simulation)
 def render_universal_action_bar(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any = None
 ) -> None:
-    """Universal Action Bar & Dynamic Presenter Mission Control on top of all tabs."""
-    with st.expander("🎙️ Panduan Presentasi 3-Menit (3-Step Guided Demo)", expanded=False):
+    """Universal Presenter Guide Expander and Critical Alerts on top of all tabs."""
+    with st.expander("🎙️ Panduan Presentasi 3-Menit (3-Step Guided Tour)", expanded=False):
         st.markdown(
-            "Gunakan alur panduan 3 langkah di bawah ini untuk mendemonstrasikan keunggulan sistem secara terstruktur di depan dosen/penguji:"
+            "Gunakan panduan 3 langkah di bawah ini untuk mendemonstrasikan keunggulan arsitektur secara terstruktur di depan dosen/penguji:"
         )
         gt_c1, gt_c2, gt_c3 = st.columns(3)
         with gt_c1:
@@ -878,183 +878,22 @@ def render_universal_action_bar(
             with st.container(border=True):
                 st.markdown("**📊 Langkah 3: Evaluasi & Arsitektur**")
                 st.caption("Arahkan audiens ke tab **Evaluasi, Bisnis & Audit DB** untuk menunjukkan ROI finansial dan bukti benchmark payload.")
-                st.info("👉 Tunjukkan Tab 3 untuk bukti kuantitatif.")
+                st.info("👉 Buka Tab 3 untuk bukti kuantitatif.")
 
     if snapshot is None or simulation is None:
         return
 
     case = snapshot.get("case")
     status = case.get("status") if case else None
-    has_pending = snapshot.get("has_pending_work", False)
 
-    # 1. Autoplay Control Bar State
-    is_autoplay = st.session_state.get("autoplay", False)
-
-    # Stop autoplay if at interaction or terminal state
-    if is_autoplay and (status in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING") or not has_pending):
-        is_autoplay = False
-        st.session_state["autoplay"] = False
-
-    # 2. Render Live Presenter HUD (Mission Control)
-    render_presenter_hud(snapshot, simulation, is_autoplay)
-
-    # 3. Universal Action Cards for Interactions
-    if status == "WAITING_GUEST":
-        proposed = case.get("proposed_room_id", "Kamar Baru")
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div style="background: #EFF6FF; border-left: 5px solid #3B82F6; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
-                    <div style="font-size: 1.05rem; font-weight: bold; color: #1E40AF;">
-                        🛎️ Tindakan Diperlukan: Persetujuan Tamu (Guest Consent)
-                    </div>
-                    <div style="font-size: 0.9rem; color: #1E3A8A; margin-top: 4px;">
-                        Agen telah memeriksa kondisi fisik dan menawarkan perpindahan ke kamar <strong>{proposed}</strong> (Kondisi Bersih & Siap). Tamu perlu menyetujui tawaran ini.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            col_act1, col_act2, col_act3 = st.columns([3, 3, 6])
-            with col_act1:
-                if st.button(f"✅ Setujui Pindah ke {proposed}", key="universal_guest_accept", type="primary", use_container_width=True):
-                    simulation.submit_guest_choice(True, actor="GUEST")
-                    simulation.run_until_pause()
-                    st.session_state["autoplay"] = False
-                    st.toast(f"✅ Tamu menyetujui pindah ke kamar {proposed}! Perpindahan selesai diproses.", icon="🎉")
-                    st.rerun()
-            with col_act2:
-                if st.button("❌ Tolak Tawaran", key="universal_guest_decline", use_container_width=True):
-                    simulation.submit_guest_choice(False, actor="GUEST")
-                    st.session_state["autoplay"] = False
-                    st.toast("❌ Tamu menolak tawaran kamar pengganti.", icon="🛎️")
-                    st.rerun()
-            with col_act3:
-                st.caption("ℹ️ Aksi cepat ini langsung terhubung tanpa perlu repot mencari tab Portal Tamu.")
-
-    elif status == "WAITING_HUMAN":
+    # Global Alert Banner when managerial intervention is required
+    if status == "WAITING_HUMAN":
         reasons = ", ".join(case.get("human_reason_codes", [])) or "Kebijakan Bisnis Terpicu"
         with st.container(border=True):
-            st.markdown(
-                f"""
-                <div style="background: #FEF3C7; border-left: 5px solid #F59E0B; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
-                    <div style="font-size: 1.05rem; font-weight: bold; color: #92400E;">
-                        🚨 Tindakan Diperlukan: Eskalasi ke Staf / Manajer Hotel
-                    </div>
-                    <div style="font-size: 0.9rem; color: #78350F; margin-top: 4px;">
-                        Aturan Policy Guardrail mengunci otomasi AI karena terdeteksi: <code>{reasons}</code>. Diperlukan keputusan manual manajer.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            st.warning(
+                f"🚨 **Eskalasi Staf Diperlukan:** Aturan Policy Guardrail mengunci otomasi AI karena terdeteksi: `{reasons}`. "
+                f"Silakan buka tab **👔 Meja Kerja Staf Hotel** untuk meninjau dan mengambil alih kasus."
             )
-            col_staff1, col_staff2 = st.columns([4, 8])
-            with col_staff1:
-                if st.button("👤 Ambil Alih Kasus (Take Over)", key="universal_staff_takeover", type="primary", use_container_width=True):
-                    out = simulation.staff_take_over()
-                    if out.get("ok"):
-                        st.toast("👤 Kasus berhasil diambil alih oleh Staf!", icon="👔")
-                        st.rerun()
-                    else:
-                        st.error(f"Gagal mengambil alih kasus: {out.get('reason')}")
-            with col_staff2:
-                st.caption("ℹ️ Klik untuk mengambil alih kasus langsung sebagai manajer hotel.")
-
-    elif status == "HUMAN_HANDLING":
-        with st.container(border=True):
-            st.markdown(
-                """
-                <div style="background: #FFF7ED; border-left: 5px solid #EA580C; padding: 12px 16px; border-radius: 6px; margin-bottom: 8px;">
-                    <div style="font-size: 1.05rem; font-weight: bold; color: #9A3412;">
-                        👔 Anda Sedang Menangani Kasus (Mode Staf Aktif)
-                    </div>
-                    <div style="font-size: 0.9rem; color: #7C2D12; margin-top: 4px;">
-                        Tulis catatan penyelesaian manajer hotel di bawah ini untuk menutup kasus secara resmi.
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            col_note, col_close = st.columns([8, 4])
-            with col_note:
-                staff_note = st.text_input(
-                    "Catatan Penyelesaian Staf:",
-                    value="Keluhan ditangani langsung oleh manajer; kompensasi ditolak sesuai SOP.",
-                    key="universal_staff_note",
-                )
-            with col_close:
-                st.write("")
-                if st.button("✅ Tutup Kasus Resmi", key="universal_staff_close", type="primary", use_container_width=True):
-                    out = simulation.staff_close_case(staff_note)
-                    if out.get("ok"):
-                        st.toast("✅ Kasus resmi diselesaikan dan ditutup oleh Staf!", icon="📁")
-                        st.rerun()
-                    else:
-                        st.error("Catatan staf wajib diisi.")
-
-    # Quick Work Order Ticket Actions in Universal Action Bar
-    active_tickets = [t for t in (simulation.list_tickets() if simulation else []) if t.get("status") in ("PENDING", "IN_PROGRESS")]
-    if active_tickets:
-        with st.container(border=True):
-            st.markdown(
-                """
-                <div style="background: #F0FDF4; border-left: 5px solid #16A34A; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;">
-                    <div style="font-size: 0.95rem; font-weight: bold; color: #166534;">
-                        📋 Papan Cepat: Tiket Tugas Fisik Staf Lapangan
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            for t_item in active_tickets:
-                tc1, tc2, tc3 = st.columns([6, 3, 3])
-                dept_ico = "🔧" if t_item.get("department") == "MAINTENANCE" else "🧹"
-                with tc1:
-                    st.markdown(f"**{dept_ico} {t_item['id']} — {t_item.get('department')}** · {t_item.get('description')} (Kamar **{t_item.get('room_id')}**)")
-                with tc2:
-                    st.markdown(f"Status: **`{t_item['status']}`**")
-                with tc3:
-                    if t_item["status"] == "PENDING":
-                        if st.button("▶️ Mulai Kerjakan", key=f"bar_ticket_start_{t_item['id']}", use_container_width=True):
-                            res = simulation.staff_update_ticket(t_item["id"], "IN_PROGRESS")
-                            if res.get("ok"):
-                                st.toast(f"🔧 Tiket {t_item['id']} status: IN_PROGRESS", icon="▶️")
-                                st.rerun()
-                    elif t_item["status"] == "IN_PROGRESS":
-                        if st.button("✔️ Tandai Selesai", key=f"bar_ticket_done_{t_item['id']}", type="primary", use_container_width=True):
-                            res = simulation.staff_update_ticket(t_item["id"], "DONE")
-                            if res.get("ok"):
-                                st.toast(f"✅ Tiket {t_item['id']} status: DONE!", icon="🎉")
-                                st.rerun()
-
-    elif status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF", "CLOSED_GUEST_DECLINED", "FAILED"):
-        assigned = case.get("assigned_room_id") or case.get("original_room_id")
-        status_label = {
-            "DIGITAL_COMPLETED": "🎉 Kasus Sukses Diselesaikan Secara Digital!",
-            "CLOSED_BY_STAFF": "✅ Kasus Berhasil Diselesaikan dan Ditutup oleh Staf!",
-            "CLOSED_GUEST_DECLINED": "⚪ Kasus Ditutup (Tamu menolak tawaran kamar)",
-            "FAILED": "🔴 Kasus Berakhir dengan Status Gagal Terstruktur",
-        }.get(status, f"Kasus Selesai: {status}")
-
-        if status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF"):
-            run_id = getattr(simulation, "run_id", "default_run")
-            if st.session_state.get("balloon_shown_run_id") != run_id:
-                st.balloons()
-                st.session_state["balloon_shown_run_id"] = run_id
-
-        st.success(
-            f"**{status_label}** (Kamar Resmi Tamu: **{assigned}**). "
-            f"👉 Anda dapat melihat evaluasi efisiensi di tab **🏨 Ringkasan Eksekutif & ROI**, "
-                f"atau memilih skenario cerita lain di Dasbor Eksekutif."
-        )
-        _render_mutation_diff_card(snapshot, simulation)
-
-    # 4. Trigger next step if autoplay is actively on
-    if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        speed = float(st.session_state.get("autoplay_speed", 2.0))
-        time.sleep(speed)
-        simulation.step()
-        st.rerun()
 
 
 def render_sidebar(model: Any) -> None:
@@ -2374,8 +2213,8 @@ def render_simulation_center(
     """Unified Live Simulation & Customer Service Experience."""
     mode = st.session_state.get("active_mode", "mobile")
 
-    # 1. Quick Scenario Command Bar
-    c_sel, c_play = st.columns([7, 5])
+    # 1. Quick Scenario Command Bar with Tempo Selector
+    c_sel, c_play = st.columns([5, 7])
     with c_sel:
         scenario_labels = {
             sid: f"{SCENARIO_DESCRIPTIONS.get(sid, {}).get('emoji', '📌')} {sid}: {SCENARIO_DESCRIPTIONS.get(sid, {}).get('judul', sid)}"
@@ -2398,12 +2237,26 @@ def render_simulation_center(
     with c_play:
         st.write("")
         st.write("")
-        btn_cols = st.columns(4)
+        col_speed, col_b1, col_b2, col_b3, col_b4 = st.columns([4, 2, 2, 2, 2])
         has_pending = snapshot.get("has_pending_work", False) if snapshot else False
         is_autoplay = st.session_state.get("autoplay", False)
         case_status = snapshot.get("case", {}).get("status") if snapshot and snapshot.get("case") else None
 
-        with btn_cols[0]:
+        with col_speed:
+            speed_map = {3.5: "🐢 3.5s", 2.0: "🚶 2.0s", 1.0: "🐇 1.0s"}
+            cur_speed = float(st.session_state.get("autoplay_speed", 2.0))
+            chosen_speed = st.selectbox(
+                "Tempo Putar",
+                options=[2.0, 3.5, 1.0],
+                format_func=lambda s: speed_map.get(s, f"{s}s"),
+                index=[2.0, 3.5, 1.0].index(cur_speed) if cur_speed in [2.0, 3.5, 1.0] else 0,
+                key="unified_tempo_select",
+                label_visibility="collapsed",
+            )
+            if chosen_speed != cur_speed:
+                st.session_state["autoplay_speed"] = chosen_speed
+
+        with col_b1:
             if is_autoplay:
                 if st.button("⏸️ Jeda", key="sim_center_pause", use_container_width=True):
                     st.session_state["autoplay"] = False
@@ -2421,7 +2274,7 @@ def render_simulation_center(
                         _start_scenario(model, selected_sid, mode)
                     st.session_state["autoplay"] = True
                     st.rerun()
-        with btn_cols[1]:
+        with col_b2:
             can_step = has_pending or simulation is None
             if st.button("⏩ Langkah", key="step_button", disabled=not can_step, use_container_width=True):
                 if simulation is None:
@@ -2433,7 +2286,7 @@ def render_simulation_center(
                     with st.spinner("🤖 Agen sedang memproses langkah..."):
                         simulation.step()
                 st.rerun()
-        with btn_cols[2]:
+        with col_b3:
             can_finish = has_pending or simulation is None
             if st.button("⚡ Selesai", key="sim_center_finish", disabled=not can_finish, use_container_width=True):
                 if simulation is None:
@@ -2444,7 +2297,7 @@ def render_simulation_center(
                 if sim_inst:
                     sim_inst.run_until_pause()
                 st.rerun()
-        with btn_cols[3]:
+        with col_b4:
             if st.button("🔄 Reset", key="sim_center_reset", use_container_width=True):
                 _start_scenario(model, selected_sid, mode)
                 st.rerun()
@@ -2455,7 +2308,43 @@ def render_simulation_center(
         st.info("💡 Tekan tombol **▶️ Putar** di atas untuk memulai demo otomatis, atau **⏩ Langkah** untuk menjalankan simulasi langkah demi langkah.")
         return
 
-    # 2. Live Flow Stepper Bar
+    # 2. Presenter Telemetry & Golden Talking Point Banner
+    telemetry = get_presenter_telemetry(snapshot, simulation)
+    with st.container(border=True):
+        c_tel1, c_tel2 = st.columns([5, 7])
+        with c_tel1:
+            st.markdown(
+                f"<div style='font-size:0.75rem; color:#64748B; font-weight:bold;'>PELAKU & LOKASI SAAT INI:</div>"
+                f"<div style='font-size:0.95rem; font-weight:bold; color:#1E3A8A; margin-top:2px;'>"
+                f"{telemetry['active_agent']}<br>"
+                f"<span style='font-size:0.8rem; font-weight:normal; color:#475569;'>Lokasi:</span> "
+                f"<span style='background:#E2E8F0; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-family:monospace; color:#0F172A;'>{telemetry['active_node']}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        with c_tel2:
+            st.markdown(
+                f"<div style='font-size:0.75rem; color:#64748B; font-weight:bold;'>AKSI NYATA YANG TERJADI:</div>"
+                f"<div style='font-size:0.95rem; font-weight:bold; color:#0F172A; margin-top:2px; line-height:1.4;'>"
+                f"📌 {telemetry['action_headline']}"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        st.markdown(
+            f"""
+            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 10px 14px; margin-top: 8px;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px;">
+                    🎓 Narasi Presentasi & Poin Penjelasan Dosen:
+                </div>
+                <div style="font-size: 0.92rem; color: #78350F; line-height: 1.4; font-style: italic; margin-top: 2px;">
+                    “{telemetry['talking_point']}”
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # 3. Live Flow Stepper Bar (Single Source of Truth)
     _render_live_flow_stepper(snapshot)
 
     case = snapshot.get("case")
@@ -2469,7 +2358,7 @@ def render_simulation_center(
     step_idx = snapshot.get("step_index", 0)
     res_text = _result_text(snapshot)
 
-    # 3. Side-by-Side Dual Pane: Left = Guest Chat, Right = Room Map & Topology
+    # 4. Side-by-Side Dual Pane: Left = WhatsApp Concierge, Right = Room Map & 2D Node Map
     col_left, col_right = st.columns([6, 6])
 
     with col_left:
@@ -2529,7 +2418,7 @@ def render_simulation_center(
                 st.caption("Nusantara AI Concierge")
                 st.markdown(ai_reply)
 
-        # Quick Guest Reply confirmation buttons when waiting guest
+        # Integrated Guest Reply Action in WhatsApp Chat
         if status == "WAITING_GUEST":
             with st.container(border=True):
                 st.markdown(f"**🏨 Tawaran Pindah Kamar:** **{case.get('proposed_room_id')}** (Gratis Setara)")
@@ -2593,16 +2482,19 @@ def render_simulation_center(
                 st.rerun()
 
     with col_right:
+        if status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF", "CLOSED_GUEST_DECLINED", "FAILED"):
+            _render_mutation_diff_card(snapshot, simulation)
+
         _render_interactive_room_map(snapshot, simulation)
         st.divider()
-        _render_live_migration_topology(snapshot)
+        render_visual_node_map(snapshot)
         with st.expander("⚖️ Metrik Keputusan & Ambang Batas Risiko", expanded=False):
             _decision_panel(snapshot)
 
-    # Autoplay runner loop with loading condition
+    # 5. Autoplay runner loop with single loading spinner
     if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        with st.spinner("🤖 Agen bergerak otomatis ke langkah berikutnya..."):
-            speed = float(st.session_state.get("autoplay_speed", 1.8))
+        with st.spinner("🤖 Agen sedang memproses langkah simulasi berikutnya..."):
+            speed = float(st.session_state.get("autoplay_speed", 2.0))
             time.sleep(speed)
             simulation.step()
         st.rerun()
