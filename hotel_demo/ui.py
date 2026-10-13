@@ -1106,8 +1106,35 @@ def render_sidebar(model: Any) -> None:
                 st.markdown(f"- Kamar Maintenance: **{maint_count} Kamar**")
             st.caption(f"⚡ *Tersinkronisasi {source_label} (SQLite)*")
 
+        # Kartu Status Kasus Berjalan (Active Case Badge)
+        if sim is not None and sim.case is not None:
+            c_info = sim.case
+            sid = getattr(sim, "scenario_id", "S01")
+            status_map = {
+                "CREATED": ("⏳ Baru Dimulai", "#64748B"),
+                "PROCESSING": ("🔄 Sedang Berjalan", "#3B82F6"),
+                "WAITING_GUEST": ("🛎️ Tunggu Persetujuan Tamu", "#2563EB"),
+                "WAITING_HUMAN": ("🚨 Eskalasi ke Manajer", "#D97706"),
+                "HUMAN_HANDLING": ("👔 Ditangani Manajer", "#EA580C"),
+                "DIGITAL_COMPLETED": ("🎉 Sukses Selesai Digital", "#16A34A"),
+                "CLOSED_BY_STAFF": ("✅ Selesai oleh Staf", "#059669"),
+                "CLOSED_GUEST_DECLINED": ("⚪ Tamu Menolak Tawaran", "#475569"),
+                "FAILED": ("🔴 Gagal Terstruktur", "#DC2626"),
+            }
+            s_label, s_color = status_map.get(c_info.status, (c_info.status, "#64748B"))
+            assigned_rm = c_info.assigned_room_id or c_info.proposed_room_id
+
+            with st.container(border=True):
+                st.markdown(f"**📌 Status Kasus Berjalan (`{sid}`):**")
+                rm_text = f"**{c_info.original_room_id}** ➔ **{assigned_rm}**" if assigned_rm else f"**{c_info.original_room_id}**"
+                st.markdown(f"- Kamar: {rm_text}")
+                st.markdown(f"- Status: <span style='font-weight:bold; color:{s_color};'>{s_label}</span>", unsafe_allow_html=True)
+                if c_info.guest_message:
+                    short_msg = c_info.guest_message[:42] + "..." if len(c_info.guest_message) > 42 else c_info.guest_message
+                    st.caption(f"Pesan: *“{short_msg}”*")
+
         st.markdown("**💡 Panduan Cepat:**")
-        st.info("Pilih salah satu **Kartu Kasus Nyata** di layar utama untuk menjalankan simulasi otomatis.")
+        st.info("Gunakan bilah **Pilihan Skenario** atau **🎙️ Panduan Presentasi 3-Menit** di atas layar utama untuk menjalankan demo interaktif.")
 
         st.divider()
 
@@ -1863,6 +1890,10 @@ def render_trace_tab(
 
     st.divider()
 
+    render_visual_node_map(snapshot)
+
+    st.divider()
+
     if snapshot is None or simulation is None:
         st.info("Pilih skenario di tab Simulasi untuk mengamati live database dump dan event trace.")
         return
@@ -1953,23 +1984,24 @@ def render_trace_tab(
     else:
         st.caption("Belum ada event.")
 
-    st.markdown("#### Checkpoint Migrasi")
+    st.markdown("#### Checkpoint Migrasi (State Integrity)")
     migration = snapshot.get("migration")
     if migration is None:
-        st.caption("Belum ada checkpoint.")
+        st.caption("Belum ada checkpoint migrasi aktif.")
     else:
-        before, after = st.columns(2)
-        with before:
-            st.markdown("**Sebelum (before snapshot)**")
-            st.json(migration.get("before_snapshot") or {})
-        with after:
-            st.markdown("**Sesudah (after snapshot)**")
-            st.json(migration.get("after_snapshot") or {})
         st.caption(
             f"expected_hash: `{migration.get('expected_hash')}` · "
             f"size: {migration.get('checkpoint_size')} byte · "
             f"error: {migration.get('error') or '-'}"
         )
+        with st.expander("📦 Buka Detail Payload Koper (Before vs After JSON Dump)", expanded=False):
+            before, after = st.columns(2)
+            with before:
+                st.markdown("**Sebelum Migrasi (Before Snapshot)**")
+                st.json(migration.get("before_snapshot") or {})
+            with after:
+                st.markdown("**Sesudah Tiba (After Snapshot)**")
+                st.json(migration.get("after_snapshot") or {})
 
     case = snapshot.get("case")
     if case is not None and case.get("inspection_results"):
