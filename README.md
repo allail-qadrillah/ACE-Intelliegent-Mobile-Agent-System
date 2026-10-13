@@ -73,37 +73,52 @@ python -m hotel_demo.ml --regenerate      # generate ulang dataset sintetis
 
 ---
 
-## 📱 3. Antarmuka Bisnis & Presenter (Business-First UX)
+## 📱 3. Antarmuka Bisnis & Presenter (Business-First UI/UX)
 
-Antarmuka web telah disederhanakan agar ramah bagi manajemen hotel dan audiens non-teknis:
+Antarmuka web telah dirancang khusus dengan standar enterprise untuk memudahkan demonstrasi di depan dosen penguji dan manajemen hotel:
 
-### A. Fitur Kemudahan Penggunaan:
-1. **🎬 4 Kartu Kasus Nyata (1-Click Story):**
-   - ❄️ **Kasus 1: AC Bocor Tengah Malam (Pak Budi - R101)** → Happy path otomatis penuh (kamar dipindahkan ke R103).
-   - 🛡️ **Kasus 2: Tamu Minta Kamar Mewah Gratis (Ibu Sarah - R201)** → Proteksi biaya via Policy Guardrail & eskalasi manajer.
-   - 💰 **Kasus 3: Sengketa Tagihan Minibar** → Folio dibaca, tetapi perubahan tagihan dieskalasi ke staf.
-   - 🕐 **Kasus 4: Informasi Check-In** → Informasi instan dari FAQ lokal Concierge Front Office.
-2. **🗺️ Peta Pergerakan Agen (2D Node Map Visualizer):**
-   - Diagram topologi interaktif 2 node (`FRONT_OFFICE` ↔ `OPERATIONS`) yang memvisualisasikan posisi agen secara real-time (`📍 Posisi Agen`), koper state (`State Bag`), pipa migrasi data, dan gerbang kebijakan (*Policy Guardrail*).
-3. **⏯️ Auto-Play Simulation Player:**
-   - Tombol `[▶️ Putar Otomatis]`, `[⏸️ Jeda]`, dan `[⏭️ Langkah Berikutnya]` dengan animasi bertahap ~1 detik per langkah untuk demonstrasi langsung.
-4. **🚨 Universal Action Bar:**
-   - Tombol persetujuan tamu (`[✅ Setujui Pindah Kamar]`) dan tombol eskalasi manajer (`[👤 Ambil Alih Kasus]`) langsung muncul di bagian atas layar tab mana pun saat dibutuhkan, mengeksekusi penyelesaian instan.
-5. **📊 Live Visual Flow Stepper & Real-time Narration:**
-   - Indikator 6 fase visual perhotelan (*Keluhan Masuk → Analisis SOP → Koordinasi Dept → Verifikasi Fisik → Persetujuan → Selesai*) beserta kotak penjelasan *"Apa yang terjadi di balik layar"*.
-6. **🧮 Kalkulator Simulasi Penghematan Hotel (Interactive ROI):**
-   - Widget interaktif untuk menghitung estimasi jam kerja staf yang dihemat dan uang yang diselamatkan dari kebocoran kamar mewah.
-7. **📖 Modul Edukasi: Cara Kerja & Analogi Nyata:**
-   - **Komik Storyboard 6 Panel:** Menjelaskan perjalanan koper agen secara visual ramah awam.
-   - **Kamus Analogi Dunia Nyata:** Konsep teknis (Mobile Agent, State Bag SHA-256, Policy Guardrail, Idempotency) dianalogikan dengan Auditor Koper Bersegel, Segel Lilin Kerajaan, Satpam Brankas Hotel, dan Sakelar Lampu Otomatis.
+### A. Fitur Unggulan Antarmuka:
+1. **🎙️ Panduan Presentasi 3-Menit (*3-Step Guided Tour*):**
+   - Bilah panduan interaktif di atas layar untuk mendemonstrasikan keunggulan sistem secara terstruktur:
+     - **Langkah 1 (S01):** Otomasi triase, migrasi koper data, eliminasi kamar kotor R102, dan alokasi kamar bersih R103.
+     - **Langkah 2 (S02):** Pengujian *Policy Guardrail* saat tamu meminta upgrade kamar mewah gratis (*Zero Cost Leakage*).
+     - **Langkah 3:** Panduan menuju Tab 3 untuk pembuktian kuantitatif efisiensi jaringan & kalkulator ROI.
+2. **⏯️ Auto-Play Simulation Player & Smart Startup:**
+   - Tombol `[▶️ Putar]`, `[⏩ Langkah]`, `[⚡ Selesai]`, dan `[🔄 Reset]` langsung aktif sejak awal buka halaman (*instant ready*), dilengkapi pilihan tempo pemutaran (*Santai 3.5s, Nyaman 2.0s, Cepat 1.0s*).
+3. **💬 WhatsApp-Style Concierge Chat & Online Indicator:**
+   - Simulasi percakapan langsung antara tamu hotel dan AI Concierge dengan lencana menyala (*glowing green online indicator*).
+4. **🏢 Denah Kamar Real-Time (Live Room Occupancy Grid):**
+   - Visualisasi denah kamar hotel (*Standard, Deluxe, Suite*) yang otomatis berubah warna sesuai status okupansi, kebersihan, dan pemeliharaan AC.
+5. **🔄 Visual Diff Mutasi Kamar (Before vs After):**
+   - Kartu komparatif 3 kolom saat kasus selesai, memvalidasi kondisi sebelum, aksi pengawalan guardrail, dan kondisi sesudah di database SQLite.
+6. **🗺️ Peta Pergerakan Agen 2D (Interactive Node Map):**
+   - Visualisasi topologi interaktif (`FRONT_OFFICE` ↔ `TRANSIT (SHA-256)` ↔ `OPERATIONS`) yang memantau pergerakan fisik agen dan koper data secara real-time.
+7. **🧮 Kalkulator Simulasi Penghematan Hotel (Interactive ROI Slider):**
+   - Widget interaktif untuk menghitung jam kerja staf yang dihemat, pencegahan kebocoran finansial (*unauthorized upgrade*), dan proteksi reputasi hotel.
+8. **📥 Pusat Unduhan & Ekspor Laporan Resmi 1-Klik:**
+   - Fasilitas unduh berkas resmi langsung dari aplikasi:
+     - 🔒 **Laporan Audit Kasus (.json)** — Seluruh trace event, hash SHA-256 koper, dan snapshot DB.
+     - 📊 **Benchmark Komparasi (.csv)** — Matriks efisiensi komparatif Mobile vs Static.
+     - 📝 **Ringkasan Eksekutif (.md)** — Dokumen resmi hasil penanganan dan tata kelola sistem.
+9. **📖 Modul Edukasi & Storyboard Komik:**
+   - **Komik Storyboard 6 Panel:** Menjelaskan perjalanan koper agen menyelesaikan AC bocor jam 01:00 pagi.
+   - **Kamus Analogi Nyata:** Analogi Koper Bersegel Lilin Kerajaan, Satpam Brankas Hotel, dan Sakelar Lampu Otomatis.
 
-### B. Struktur Tab Navigasi:
-1. **`🏨 Dasbor Eksekutif & Cerita Kasus`** — Pemilihan skenario 1-klik, Peta Pergerakan Agen 2D, Live Stepper alur kasus, metrik efisiensi, dan kalkulator ROI.
-2. **`📖 Cara Kerja & Analogi Nyata`** — Pusat edukasi pemahaman konsep: Komik 6 Panel, Analogi Dunia Nyata, dan Kamus Istilah.
-3. **`🛎️ HP Tamu (Layanan Tamu)`** — Simulasi smartphone tamu, percakapan agen interaktif, dan kartu persetujuan pindah kamar instan.
-4. **`👔 Meja Kerja Staf Hotel`** — Antrean kasus eskalasi manajer (takeover gate), form catatan SOP, dan papan tiket kerja fisik (Housekeeping/Maintenance).
-5. **`🎬 Uji Seluruh Skenario`** — Eksekusi batch seluruh skenario (Autorun) dengan ringkasan status kelulusan.
-6. **`🛠️ Mode Pengembang (Khusus IT)`** — Konsol teknis khusus pengembang: Lab Step Simulator, observabilitas event log DB, komparasi Mobile vs Static, dan confusion matrix ML.
+### B. Struktur Tab Navigasi Terpadu:
+1. **`🎯 Tab 1: Simulasi Skenario (Live Demo & Auto-Play)`**  
+   Pilihan Skenario Kasus, Kontrol Player, Telemetri HUD Presenter & Narasi Poin Dosen, WhatsApp Concierge, Denah Kamar, dan Kartu Visual Diff Mutasi.
+2. **`👔 Tab 2: Meja Kerja Staf Hotel`**  
+   Antrean Kasus Eskalasi Manajer (*Takeover Gate*), Form Catatan Resmi SOP, Papan Tiket Tugas Fisik (*Work Orders*), dan Sandbox Kontrol Fisik Kamar (Kebersihan & Servis AC).
+3. **`📊 Tab 3: Evaluasi, Bisnis & Audit DB`**  
+   Terdiri dari 3 Sub-Modul Terintegrasi:
+   - **🏨 Dampak Bisnis & ROI Hotel:** Dasbor Eksekutif, 4 Metrik ROI Finansial, Kalkulator ROI Slider, Komik Storyboard, dan Kamus Analogi.
+   - **🔬 Benchmark Mobile vs Static & ML:** Matriks performa komparatif, 100% Assertion Equality, dan Laporan Model Machine Learning.
+   - **🔍 Audit Database, Event Trace & Unduhan:** Pusat Unduhan Laporan, Peta Pergerakan 2D, Metrik Payload, Tabel Pesan, Tabel Event Audit ber-Filter Cepat (*Semua, Migrasi, Guardrail, Tamu/Staf*), dan Accordion Payload Koper.
+
+### C. Navigasi Sidebar Cerdas:
+- **📊 Ringkasan Properti Hari Ini:** Total Kamar, Occupancy %, Kamar Bersih, Kamar Kotor, dan Kamar Maintenance (Sinkron Live SQLite).
+- **📌 Kartu Status Kasus Berjalan (*Active Case Badge*):** Real-time tracking Kamar Tamu, Mutasi Kamar Pengganti, Status Badge Berwarna, dan Cuplikan Keluhan Tamu.
+- **⚙️ Mode Pengembang & Uji Teknis:** Pemilihan Mode Agen (`Mobile Agent` vs `Static RPC`) dan Tombol Pengujian Skenario.
 
 ---
 
