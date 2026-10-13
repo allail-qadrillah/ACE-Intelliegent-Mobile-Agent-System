@@ -494,6 +494,13 @@ class OperationsRepository:
             (1 if blocked else 0, room_id),
         )
 
+    def set_cleanliness(self, room_id: str, cleanliness: str) -> None:
+        self.conn.execute(
+            "UPDATE room_readiness SET cleanliness = ?,"
+            " evidence_version = evidence_version + 1 WHERE room_id = ?",
+            (cleanliness, room_id),
+        )
+
     def get_applied(self, operation_key: str) -> Optional[Dict[str, Any]]:
         row = self.conn.execute(
             "SELECT result_json FROM applied_operations WHERE operation_key = ?",

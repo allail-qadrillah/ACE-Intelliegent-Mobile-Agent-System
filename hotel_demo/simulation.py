@@ -784,6 +784,12 @@ class Simulation:
     def list_tickets(self) -> List[Dict[str, Any]]:
         return self.operations.list_tickets()
 
+    def staff_set_room_cleanliness(self, room_id: str, cleanliness: str) -> None:
+        self.operations.set_cleanliness(room_id, cleanliness)
+
+    def staff_set_maintenance_block(self, room_id: str, blocked: bool) -> None:
+        self.operations.set_maintenance_block(room_id, blocked)
+
     # --------------------------------------------------------------- snapshot
     def agent_cards(self) -> List[Dict[str, Any]]:
         cards = []

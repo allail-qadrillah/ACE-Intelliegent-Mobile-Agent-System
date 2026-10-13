@@ -741,8 +741,11 @@ def render_presenter_hud(
         # 3. Presenter Talking Point (The Golden Banner)
         st.markdown(
             f"""
-            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 6px; padding: 10px 14px; margin-top: 10px;">
-                <div style="font-size: 0.95rem; color: #78350F; margin-top: 4px; line-height: 1.5; font-style: italic;">
+            <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 12px 16px; margin-top: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #B45309; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                    🎓 Narasi Presentasi & Poin Penjelasan Dosen:
+                </div>
+                <div style="font-size: 0.95rem; color: #78350F; line-height: 1.5; font-style: italic;">
                     “{telemetry['talking_point']}”
                 </div>
             </div>
@@ -931,6 +934,12 @@ def render_universal_action_bar(
             "CLOSED_GUEST_DECLINED": "⚪ Kasus Ditutup (Tamu menolak tawaran kamar)",
             "FAILED": "🔴 Kasus Berakhir dengan Status Gagal Terstruktur",
         }.get(status, f"Kasus Selesai: {status}")
+
+        if status in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF"):
+            run_id = getattr(simulation, "run_id", "default_run")
+            if st.session_state.get("balloon_shown_run_id") != run_id:
+                st.balloons()
+                st.session_state["balloon_shown_run_id"] = run_id
 
         st.success(
             f"**{status_label}** (Kamar Resmi Tamu: **{assigned}**). "
@@ -2297,15 +2306,136 @@ def render_simulation_center(
 render_guest_portal = render_simulation_center
 
 
+def render_download_center(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any
+) -> None:
+    """Renders a 1-click Download & Export Center for audit logs, benchmarks, and executive summaries."""
+    import csv
+    import io
+    from datetime import datetime
+
+    st.markdown("### 📥 Pusat Unduhan & Ekspor Laporan Resmi")
+    st.caption("Unduh berkas audit teknis, benchmark performa komparatif, dan laporan eksekutif untuk keperluan presentasi atau evaluasi.")
+
+    col1, col2, col3 = st.columns(3)
+
+    # 1. Technical Audit Trail (JSON)
+    with col1:
+        with st.container(border=True):
+            st.markdown("#### 🔒 Laporan Audit Kasus (.json)")
+            st.markdown(
+                """
+                - **Format:** Berkas JSON terstruktur
+                - **Isi:** Seluruh event trace, hash SHA-256 koper migrasi, pesan antar-node, dan snapshot tabel database.
+                - **Tujuan:** Verifikasi teknis dosen & tim audit enterprise.
+                """
+            )
+            if simulation:
+                json_str = simulation.export_json()
+                run_id = getattr(simulation, "run_id", "sim_run")
+                sid = snapshot.get("scenario_id", "S01") if snapshot else "S01"
+                st.download_button(
+                    "⬇️ Unduh Audit JSON",
+                    data=json_str,
+                    file_name=f"audit-kasus-{sid}-{run_id}.json",
+                    mime="application/json",
+                    key="dl_center_json",
+                    use_container_width=True,
+                    type="primary",
+                )
+            else:
+                st.caption("ℹ️ Jalankan skenario terlebih dahulu untuk mengunduh log audit.")
+
+    # 2. Benchmark Comparison (CSV)
+    with col2:
+        with st.container(border=True):
+            st.markdown("#### 📊 Benchmark Komparasi (.csv)")
+            st.markdown(
+                """
+                - **Format:** CSV (Spreadsheet / Excel)
+                - **Isi:** Matriks efisiensi komparatif Mobile Agent vs Static Agent (byte payload, pesan jaringan, dan latensi komputasi).
+                - **Tujuan:** Analisis kuantitatif performa arsitektur.
+                """
+            )
+            comp_result = run_comparison(model=model)
+            table_rows = comparison_table_rows(comp_result)
+            csv_buf = io.StringIO()
+            if table_rows:
+                writer = csv.DictWriter(csv_buf, fieldnames=list(table_rows[0].keys()))
+                writer.writeheader()
+                writer.writerows(table_rows)
+            csv_content = csv_buf.getvalue()
+
+            st.download_button(
+                "⬇️ Unduh Benchmark CSV",
+                data=csv_content,
+                file_name="benchmark-performa-mobile-vs-static.csv",
+                mime="text/csv",
+                key="dl_center_csv",
+                use_container_width=True,
+                type="primary",
+            )
+
+    # 3. Executive Business Summary (Markdown / TXT)
+    with col3:
+        with st.container(border=True):
+            st.markdown("#### 📝 Ringkasan Eksekutif (.md)")
+            st.markdown(
+                """
+                - **Format:** Dokumen Markdown Resmi
+                - **Isi:** Ringkasan hasil penanganan, estimasi penghematan biaya (Zero Cost Leakage), efisiensi SLA waktu, dan profil tim pengembang.
+                - **Tujuan:** Bahan bacaan dosen penguji & manajemen hotel.
+                """
+            )
+            sid = snapshot.get("scenario_id", "S01") if snapshot else "S01"
+            case = (snapshot.get("case") or {}) if snapshot else {}
+            st_case = case.get("status", "COMPLETED") if case else "STANDBY"
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            assigned_str = case.get("assigned_room_id") or case.get("proposed_room_id") or "-"
+
+            exec_doc = f"""# 🏨 LAPORAN EKSEKUTIF PENANGANAN KOMPLAIN & AUDIT MULTI-AGENT
+**Sistem:** ACE Intelligent Mobile Agent System — Hotel Nusantara Demo  
+**Waktu Ekspor:** {now_str}  
+**Mata Kuliah:** Agent Enterprise (Semester 3)  
+**Kelompok 5:** M. Al lail Qadrillah, Dimas Prabowo, Monanta Alfiareza, Frans Alwan  
+
+---
+
+## 1. Ringkasan Kasus Aktif
+- **ID Skenario:** {sid}
+- **Status Akhir Kasus:** {st_case}
+- **Kamar Tamu:** {case.get('original_room_id', 'R101')} ➔ Kamar Pengganti: {assigned_str}
+- **Pesan Tamu:** "{case.get('guest_message', '-')}"
+
+## 2. Nilai Bisnis & Tata Kelola (Business Impact)
+- **Zero Cost Leakage:** Proteksi Policy Guardrail memastikan kenaikan kelas kamar (upgrade) ilegal diblokir secara deterministik.
+- **Efisiensi Waktu (SLA):** Keluhan diselesaikan secara digital dalam waktu < 1 menit tanpa antrean di resepsionis lobi.
+- **Privasi & Keamanan Data:** Database fisik Housekeeping di node Operations tidak pernah diekspos langsung ke jaringan eksternal. Mobile Agent bermigrasi secara lokal membawa state berkode hash SHA-256 (ACE-MAMP v1.0).
+
+## 3. Kesimpulan & Rekomendasi
+Sistem berhasil mendemonstrasikan keunggulan paradigma **Mobile Agent** dibandingkan pendekatan Static RPC konvensional dengan memotong lalu lintas jaringan dan mengisolasi domain data perhotelan.
+"""
+            st.download_button(
+                "⬇️ Unduh Ringkasan (.md)",
+                data=exec_doc,
+                file_name=f"ringkasan-eksekutif-{sid}.md",
+                mime="text/markdown",
+                key="dl_center_md",
+                use_container_width=True,
+                type="primary",
+            )
+
+
 def render_unified_evaluation_audit(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any
 ) -> None:
-    """Consolidated Evaluation, Business ROI, Database Audit, and Comprehension Suite."""
-    e_tab1, e_tab2, e_tab3, e_tab4 = st.tabs(
+    """Consolidated Evaluation, Business ROI, Database Audit, Download Center, and Comprehension Suite."""
+    e_tab1, e_tab2, e_tab3, e_tab4, e_tab5 = st.tabs(
         [
             "🏨 Dampak Bisnis & ROI",
             "📊 Benchmark Mobile vs Static & ML",
             "🔍 Observabilitas & Audit DB",
+            "📥 Pusat Unduhan & Ekspor",
             "📖 Cara Kerja & Analogi Konsep",
         ]
     )
@@ -2316,6 +2446,8 @@ def render_unified_evaluation_audit(
     with e_tab3:
         render_trace_tab(snapshot, simulation)
     with e_tab4:
+        render_download_center(snapshot, simulation, model)
+    with e_tab5:
         render_comprehension_tab()
 
 
@@ -2430,6 +2562,64 @@ def render_staff_portal(
                         st.markdown("✅ **Selesai**")
     else:
         st.info("Belum ada tiket pekerjaan fisik yang dibuat.")
+
+    st.divider()
+
+    # Section 3: Two-Way Interactive Room Control (Housekeeping & Maintenance Sandbox)
+    st.markdown("### 🛏️ Kontrol Dua Arah Status Fisik Kamar (Sandbox Operasional)")
+    st.caption(
+        "Ubah status fisik kamar secara langsung di database Node Operations. "
+        "Staf dapat menyelesaikan perbaikan AC atau mencuci kamar untuk menguji bagaimana Mobile Agent merespons secara adaptif!"
+    )
+
+    ops_rooms = simulation.operations.dump().get("room_readiness", [])
+    fo_rooms = {r["id"]: r for r in simulation.front_office.dump().get("rooms", [])}
+
+    if ops_rooms:
+        r_cols = st.columns(len(ops_rooms))
+        for idx, r_item in enumerate(ops_rooms):
+            rid = r_item.get("room_id")
+            fo_meta = fo_rooms.get(rid, {})
+            rtype = fo_meta.get("room_type", "standard").capitalize()
+            occ_by = fo_meta.get("occupied_by")
+            cleanliness = r_item.get("cleanliness", "clean")
+            maint_blocked = bool(r_item.get("maintenance_blocked", False))
+
+            with r_cols[idx]:
+                with st.container(border=True):
+                    st.markdown(f"**🏨 Kamar {rid}**")
+                    st.caption(f"Tipe: **{rtype}** · {('👤 Terisi' if occ_by else '🛏️ Kosong')}")
+
+                    clean_badge = "✨ Bersih" if cleanliness == "clean" else "🧹 Kotor"
+                    st.markdown(f"Kebersihan: **{clean_badge}**")
+
+                    maint_badge = "⛔ Rusak (AC)" if maint_blocked else "✅ Normal"
+                    st.markdown(f"Fasilitas: **{maint_badge}**")
+
+                    st.write("")
+                    # Action toggle 1: Cleanliness
+                    if cleanliness == "dirty":
+                        if st.button("🧹 Selesai Cuci", key=f"staff_clean_{rid}", use_container_width=True, type="primary"):
+                            simulation.staff_set_room_cleanliness(rid, "clean")
+                            st.toast(f"✨ Kamar {rid} berhasil diset BERSIH!", icon="🧹")
+                            st.rerun()
+                    else:
+                        if st.button("Set Kotor", key=f"staff_dirty_{rid}", use_container_width=True):
+                            simulation.staff_set_room_cleanliness(rid, "dirty")
+                            st.toast(f"🧹 Kamar {rid} diset KOTOR untuk simulasi.", icon="⚠️")
+                            st.rerun()
+
+                    # Action toggle 2: Maintenance
+                    if maint_blocked:
+                        if st.button("🔧 Selesai Servis AC", key=f"staff_unblock_{rid}", use_container_width=True, type="primary"):
+                            simulation.staff_set_maintenance_block(rid, False)
+                            st.toast(f"✅ Kamar {rid} servis AC selesai & blokir dicabut!", icon="🔧")
+                            st.rerun()
+                    else:
+                        if st.button("Set AC Rusak", key=f"staff_block_{rid}", use_container_width=True):
+                            simulation.staff_set_maintenance_block(rid, True)
+                            st.toast(f"⛔ Kamar {rid} ditandai AC RUSAK untuk simulasi.", icon="⚠️")
+                            st.rerun()
 
 
 def render_visual_node_map(snapshot: Optional[Dict[str, Any]]) -> None:
