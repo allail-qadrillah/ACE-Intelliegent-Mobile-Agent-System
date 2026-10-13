@@ -865,6 +865,7 @@ def render_universal_action_bar(
                 if st.button("▶️ Putar Demo 1 (S01)", key="guided_tour_s01", use_container_width=True, type="primary"):
                     _start_scenario(model, "S01", "mobile")
                     st.session_state["autoplay"] = True
+                    st.toast("▶️ Memutar Demo 1 (S01: Otomasi & Migrasi Koper)...", icon="❄️")
                     st.rerun()
         with gt_c2:
             with st.container(border=True):
@@ -873,6 +874,7 @@ def render_universal_action_bar(
                 if st.button("▶️ Putar Demo 2 (S02)", key="guided_tour_s02", use_container_width=True):
                     _start_scenario(model, "S02", "mobile")
                     st.session_state["autoplay"] = True
+                    st.toast("▶️ Memutar Demo 2 (S02: Proteksi Biaya & Policy Guardrail)...", icon="🛡️")
                     st.rerun()
         with gt_c3:
             with st.container(border=True):
@@ -2228,7 +2230,6 @@ def render_simulation_center(
             options=SCENARIO_ORDER,
             format_func=lambda s: scenario_labels.get(s, s),
             index=current_idx,
-            key="sim_center_scenario_select",
         )
         if selected_sid != current_sid:
             _start_scenario(model, selected_sid, mode)
