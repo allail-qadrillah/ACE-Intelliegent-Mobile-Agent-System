@@ -2173,7 +2173,7 @@ def render_simulation_center(
             ai_reply = (
                 f"Kamar Anda {room_id} terdeteksi mengalami kendala teknis (AC bocor). "
                 f"Saya telah memeriksa langsung ke departemen Housekeeping dan menemukan kamar pengganti setara yaitu "
-                f"<strong>Kamar {proposed_id}</strong> yang sudah <strong>BERSIH & SIAP HUNI</strong> tanpa biaya tambahan. "
+                f"**Kamar {proposed_id}** yang sudah **BERSIH & SIAP HUNI** tanpa biaya tambahan. "
                 f"Mohon konfirmasi apakah Anda berkenan pindah?"
             )
         elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
@@ -2184,7 +2184,7 @@ def render_simulation_center(
         elif status == "DIGITAL_COMPLETED":
             if assigned_id:
                 ai_reply = (
-                    f"🎉 Pemindahan kamar ke <strong>Kamar {assigned_id}</strong> telah resmi diproses di sistem Front Office. "
+                    f"🎉 Pemindahan kamar ke **Kamar {assigned_id}** telah resmi diproses di sistem Front Office. "
                     f"Kunci kamar baru siap diambil di resepsionis. Selamat beristirahat!"
                 )
             else:
@@ -2193,15 +2193,13 @@ def render_simulation_center(
             ai_reply = "Baik, tawaran pindah kamar dibatalkan sesuai pilihan Anda. Teknisi tetap memperbaiki AC."
         elif status == "CLOSED_BY_STAFF":
             note = case.get("closed_note") or "Selesai ditangani"
-            ai_reply = f"Kasus telah diselesaikan oleh Staf Hotel. Catatan: <em>{note}</em>"
+            ai_reply = f"Kasus telah diselesaikan oleh Staf Hotel. Catatan: *{note}*"
         elif step_idx > 0:
             ai_reply = "Saya sedang memproses keluhan Anda dan berkoordinasi dengan departemen terkait..."
         else:
             ai_reply = "Halo! Saya Asisten AI Hotel Nusantara. Ada yang bisa saya bantu terkait masa inap Anda?"
 
-        in_transit_badge = ""
-        if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
-            in_transit_badge = '<div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; border: 1px solid #FDE68A;">⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations memeriksa fisik kamar...</div>'
+        is_in_transit = mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF"))
 
         with st.container(border=True):
             st.markdown(
@@ -2217,7 +2215,7 @@ def render_simulation_center(
                 st.caption(f"Tamu (Kamar {room_id})")
                 st.markdown(f'**"{guest_msg}"**')
 
-            if in_transit_badge:
+            if is_in_transit:
                 st.info("⚡ **Investigasi Otonom:** Agen bermigrasi ke Node Operations untuk memeriksa fisik kamar...")
 
             with st.chat_message("assistant", avatar="🏨"):
