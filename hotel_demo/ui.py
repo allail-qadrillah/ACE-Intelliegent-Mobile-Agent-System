@@ -2383,7 +2383,7 @@ def render_simulation_center(
                     st.session_state["autoplay"] = False
                     st.rerun()
             else:
-                can_play = has_pending and case_status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING")
+                can_play = (has_pending or simulation is None) and case_status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING")
                 if st.button(
                     "▶️ Putar",
                     key="sim_center_play",
@@ -2391,19 +2391,33 @@ def render_simulation_center(
                     type="primary" if can_play else "secondary",
                     use_container_width=True,
                 ):
+                    if simulation is None:
+                        _start_scenario(model, selected_sid, mode)
                     st.session_state["autoplay"] = True
                     st.rerun()
         with btn_cols[1]:
-            if st.button("⏩ Langkah", key="step_button", disabled=not has_pending, use_container_width=True):
-                if simulation:
+            can_step = has_pending or simulation is None
+            if st.button("⏩ Langkah", key="step_button", disabled=not can_step, use_container_width=True):
+                if simulation is None:
+                    _start_scenario(model, selected_sid, mode)
+                    sim_inst = st.session_state.get("simulation")
+                    if sim_inst:
+                        sim_inst.step()
+                else:
                     with st.spinner("🤖 Agen sedang memproses langkah..."):
                         simulation.step()
-                    st.rerun()
+                st.rerun()
         with btn_cols[2]:
-            if st.button("⚡ Selesai", key="sim_center_finish", disabled=not has_pending, use_container_width=True):
-                if simulation:
-                    simulation.run_until_pause()
-                    st.rerun()
+            can_finish = has_pending or simulation is None
+            if st.button("⚡ Selesai", key="sim_center_finish", disabled=not can_finish, use_container_width=True):
+                if simulation is None:
+                    _start_scenario(model, selected_sid, mode)
+                    sim_inst = st.session_state.get("simulation")
+                else:
+                    sim_inst = simulation
+                if sim_inst:
+                    sim_inst.run_until_pause()
+                st.rerun()
         with btn_cols[3]:
             if st.button("🔄 Reset", key="sim_center_reset", use_container_width=True):
                 _start_scenario(model, selected_sid, mode)
@@ -2412,7 +2426,7 @@ def render_simulation_center(
     st.divider()
 
     if snapshot is None or simulation is None:
-        st.info("Pilih skenario di atas untuk memulai simulasi interaktif.")
+        st.info("💡 Tekan tombol **▶️ Putar** di atas untuk memulai demo otomatis, atau **⏩ Langkah** untuk menjalankan simulasi langkah demi langkah.")
         return
 
     # 2. Live Flow Stepper Bar
