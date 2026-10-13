@@ -83,16 +83,16 @@ Antarmuka web telah dirancang khusus dengan standar enterprise untuk memudahkan 
      - **Langkah 1 (S01):** Otomasi triase, migrasi koper data, eliminasi kamar kotor R102, dan alokasi kamar bersih R103.
      - **Langkah 2 (S02):** Pengujian *Policy Guardrail* saat tamu meminta upgrade kamar mewah gratis (*Zero Cost Leakage*).
      - **Langkah 3:** Panduan menuju Tab 3 untuk pembuktian kuantitatif efisiensi jaringan & kalkulator ROI.
-2. **⏯️ Auto-Play Simulation Player & Smart Startup:**
-   - Tombol `[▶️ Putar]`, `[⏩ Langkah]`, `[⚡ Selesai]`, dan `[🔄 Reset]` langsung aktif sejak awal buka halaman (*instant ready*), dilengkapi pilihan tempo pemutaran (*Santai 3.5s, Nyaman 2.0s, Cepat 1.0s*).
+2. **⏯️ Unified Mission Control & Auto-Play Simulation Player:**
+   - Bilah kendali terpadu langsung di atas Tab 1 dengan tombol `[▶️ Putar]`, `[⏩ Langkah]`, `[⚡ Selesai]`, dan `[🔄 Reset]` yang langsung aktif sejak awal buka halaman (*instant ready*). Dilengkapi pilihan tempo pemutaran (*Santai 3.5s, Nyaman 2.0s, Cepat 1.0s*) dan indikator progres visual (*spinner status transparan*) yang mencegah double-loop.
 3. **💬 WhatsApp-Style Concierge Chat & Online Indicator:**
-   - Simulasi percakapan langsung antara tamu hotel dan AI Concierge dengan lencana menyala (*glowing green online indicator*).
+   - Simulasi percakapan interaktif antara tamu hotel dan AI Concierge dengan lencana menyala (*glowing green online indicator*).
 4. **🏢 Denah Kamar Real-Time (Live Room Occupancy Grid):**
    - Visualisasi denah kamar hotel (*Standard, Deluxe, Suite*) yang otomatis berubah warna sesuai status okupansi, kebersihan, dan pemeliharaan AC.
 5. **🔄 Visual Diff Mutasi Kamar (Before vs After):**
    - Kartu komparatif 3 kolom saat kasus selesai, memvalidasi kondisi sebelum, aksi pengawalan guardrail, dan kondisi sesudah di database SQLite.
 6. **🗺️ Peta Pergerakan Agen 2D (Interactive Node Map):**
-   - Visualisasi topologi interaktif (`FRONT_OFFICE` ↔ `TRANSIT (SHA-256)` ↔ `OPERATIONS`) yang memantau pergerakan fisik agen dan koper data secara real-time.
+   - Visualisasi topologi interaktif (`FRONT_OFFICE` ↔ `TRANSIT (SHA-256)` ↔ `OPERATIONS`) yang memantau pergerakan fisik agen dan koper data secara real-time langsung di kolom kanan Tab 1 maupun Tab 3.
 7. **🧮 Kalkulator Simulasi Penghematan Hotel (Interactive ROI Slider):**
    - Widget interaktif untuk menghitung jam kerja staf yang dihemat, pencegahan kebocoran finansial (*unauthorized upgrade*), dan proteksi reputasi hotel.
 8. **📥 Pusat Unduhan & Ekspor Laporan Resmi 1-Klik:**
@@ -106,7 +106,10 @@ Antarmuka web telah dirancang khusus dengan standar enterprise untuk memudahkan 
 
 ### B. Struktur Tab Navigasi Terpadu:
 1. **`🎯 Tab 1: Simulasi Skenario (Live Demo & Auto-Play)`**  
-   Pilihan Skenario Kasus, Kontrol Player, Telemetri HUD Presenter & Narasi Poin Dosen, WhatsApp Concierge, Denah Kamar, dan Kartu Visual Diff Mutasi.
+   - **Bilah Kontrol Terpadu:** Kontrol player pemutaran otomatis, pilihan tempo, dan Telemetri HUD Presenter & Narasi Poin Dosen.
+   - **Layout Berimbang 2 Kolom:**
+     - **Kolom Kiri:** WhatsApp Concierge Chat dengan kartu persetujuan tamu (*Guest Consent Card*) terintegrasi.
+     - **Kolom Kanan:** Kartu Visual Diff Mutasi Kamar, Denah Kamar Real-Time, Peta Pergerakan Agen 2D, dan Penjelasan Kebijakan Risiko.
 2. **`👔 Tab 2: Meja Kerja Staf Hotel`**  
    Antrean Kasus Eskalasi Manajer (*Takeover Gate*), Form Catatan Resmi SOP, Papan Tiket Tugas Fisik (*Work Orders*), dan Sandbox Kontrol Fisik Kamar (Kebersihan & Servis AC).
 3. **`📊 Tab 3: Evaluasi, Bisnis & Audit DB`**  
