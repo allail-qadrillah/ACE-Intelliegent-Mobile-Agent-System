@@ -850,7 +850,7 @@ def _render_mutation_diff_card(snapshot: Dict[str, Any], simulation: Simulation)
 
 
 def render_universal_action_bar(
-    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation]
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any = None
 ) -> None:
     """Universal Action Bar & Dynamic Presenter Mission Control on top of all tabs."""
     with st.expander("🎙️ Panduan Presentasi 3-Menit (3-Step Guided Demo)", expanded=False):
@@ -863,7 +863,6 @@ def render_universal_action_bar(
                 st.markdown("**❄️ Langkah 1: Otomasi & Migrasi**")
                 st.caption("Kasus S01: AC rusak, agen bermigrasi ke operasi, tolak kamar kotor R102, alokasikan kamar bersih R103.")
                 if st.button("▶️ Putar Demo 1 (S01)", key="guided_tour_s01", use_container_width=True, type="primary"):
-                    model = getattr(simulation, "model", None) if simulation else None
                     _start_scenario(model, "S01", "mobile")
                     st.session_state["autoplay"] = True
                     st.rerun()
@@ -872,7 +871,6 @@ def render_universal_action_bar(
                 st.markdown("**🛡️ Langkah 2: Proteksi Biaya (Guardrail)**")
                 st.caption("Kasus S02: Tamu minta kamar Deluxe mewah gratis, Policy Guardrail mengunci otomasi agar tidak bocor biaya.")
                 if st.button("▶️ Putar Demo 2 (S02)", key="guided_tour_s02", use_container_width=True):
-                    model = getattr(simulation, "model", None) if simulation else None
                     _start_scenario(model, "S02", "mobile")
                     st.session_state["autoplay"] = True
                     st.rerun()
@@ -883,10 +881,6 @@ def render_universal_action_bar(
                 st.info("👉 Tunjukkan Tab 3 untuk bukti kuantitatif.")
 
     if snapshot is None or simulation is None:
-        st.info(
-            "👉 **Langkah Anda Sekarang:** Pilih salah satu skenario cerita di tab Eksekutif atau di sidebar sebelah kiri untuk memulai.",
-            icon="💡",
-        )
         return
 
     case = snapshot.get("case")

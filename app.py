@@ -11,6 +11,7 @@ from hotel_demo.ui import (
     render_simulation_center,
     render_staff_portal,
     render_unified_evaluation_audit,
+    render_universal_action_bar,
 )
 
 st.set_page_config(page_title="Demo Mobile Agent Hotel", layout="wide")
@@ -29,6 +30,8 @@ def main() -> None:
 
     simulation = st.session_state.get("simulation")
     snapshot = simulation.snapshot() if simulation is not None else None
+
+    render_universal_action_bar(snapshot, simulation, model)
 
     # Clean Navigation
     st.markdown(
