@@ -2066,41 +2066,189 @@ def render_autorun_tab(model: Any) -> None:
         st.rerun()
 
 
-def render_guest_portal(
+def render_simulation_center(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any
 ) -> None:
-    """Customer / Guest Interactive Portal."""
-    st.markdown("## 🛎️ Portal Interaktif Layanan Tamu")
-    st.caption(
-        "Antarmuka ramah pengguna bagi tamu Hotel Nusantara untuk menyampaikan keluhan, "
-        "memantau respon agen AI secara real-time, dan mengonfirmasi pemindahan kamar."
-    )
+    """Unified Live Simulation & Customer Service Experience."""
+    mode = st.session_state.get("active_mode", "mobile")
+
+    # 1. Quick Scenario Command Bar
+    c_sel, c_play = st.columns([7, 5])
+    with c_sel:
+        scenario_labels = {
+            sid: f"{SCENARIO_DESCRIPTIONS.get(sid, {}).get('emoji', '📌')} {sid}: {SCENARIO_DESCRIPTIONS.get(sid, {}).get('judul', sid)}"
+            for sid in SCENARIO_ORDER
+        }
+        current_sid = snapshot.get("scenario_id", "S01") if snapshot else "S01"
+        current_idx = SCENARIO_ORDER.index(current_sid) if current_sid in SCENARIO_ORDER else 0
+
+        selected_sid = st.selectbox(
+            "Pilih Skenario Kasus Hotel:",
+            options=SCENARIO_ORDER,
+            format_func=lambda s: scenario_labels.get(s, s),
+            index=current_idx,
+            key="sim_center_scenario_select",
+        )
+        if selected_sid != current_sid:
+            _start_scenario(model, selected_sid, mode)
+            st.rerun()
+
+    with c_play:
+        st.write("")
+        st.write("")
+        btn_cols = st.columns(3)
+        has_pending = snapshot.get("has_pending_work", False) if snapshot else False
+        with btn_cols[0]:
+            if st.button("⏩ Langkah", key="step_button", disabled=not has_pending, use_container_width=True):
+                if simulation:
+                    simulation.step()
+                    st.rerun()
+        with btn_cols[1]:
+            if st.button("⚡ Selesaikan", key="sim_center_finish", disabled=not has_pending, type="primary", use_container_width=True):
+                if simulation:
+                    simulation.run_until_pause()
+                    st.rerun()
+        with btn_cols[2]:
+            if st.button("🔄 Reset", key="sim_center_reset", use_container_width=True):
+                _start_scenario(model, selected_sid, mode)
+                st.rerun()
 
     st.divider()
 
-    # 1. Pilih Kebutuhan Layanan
-    st.markdown("### 💬 Pilih atau Ajukan Permintaan Anda")
-    mode = st.session_state.get("active_mode", "mobile")
+    if snapshot is None or simulation is None:
+        st.info("Pilih skenario di atas untuk memulai simulasi interaktif.")
+        return
 
-    col_presets, col_custom = st.columns([7, 5])
+    # 2. Live Flow Stepper Bar
+    _render_live_flow_stepper(snapshot)
 
-    with col_presets:
-        st.markdown("**Pilihan Layanan Cepat (Presets Skenario):**")
-        cols = st.columns(3)
-        for i, sid in enumerate(SCENARIO_ORDER):
-            info = SCENARIO_DESCRIPTIONS.get(sid, {})
-            with cols[i % 3]:
-                if st.button(
-                    f"{info.get('emoji', '📌')} {info.get('judul', sid)}",
-                    key=f"guest_portal_launch_{sid}",
+    case = snapshot.get("case")
+    guest_msg = case.get("guest_message") if case else "Belum ada pesan."
+    status = case.get("status") if case else "CREATED"
+    room_id = case.get("original_room_id", "R101") if case else "R101"
+    proposed_id = case.get("proposed_room_id") if case else None
+    assigned_id = case.get("assigned_room_id") if case else None
+    mig_info = snapshot.get("migration")
+    mig_stage = mig_info.get("stage") if mig_info else None
+    step_idx = snapshot.get("step_index", 0)
+    res_text = _result_text(snapshot)
+
+    # 3. Side-by-Side Dual Pane: Left = Guest Chat, Right = Room Map & Topology
+    col_left, col_right = st.columns([6, 6])
+
+    with col_left:
+        st.markdown("#### 📱 Percakapan Tamu (WhatsApp Concierge)")
+
+        # Determine AI response text
+        if status == "WAITING_GUEST":
+            ai_reply = (
+                f"Kamar Anda {room_id} terdeteksi mengalami kendala teknis (AC bocor). "
+                f"Saya telah memeriksa langsung ke departemen Housekeeping dan menemukan kamar pengganti setara yaitu "
+                f"<strong>Kamar {proposed_id}</strong> yang sudah <strong>BERSIH & SIAP HUNI</strong> tanpa biaya tambahan. "
+                f"Mohon konfirmasi apakah Anda berkenan pindah?"
+            )
+        elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
+            ai_reply = (
+                "Permintaan Anda memerlukan peninjauan manajerial khusus untuk perlindungan kebijakan hotel. "
+                "Keluhan Anda telah diteruskan langsung ke Manajer Hotel di Meja Kerja Staf."
+            )
+        elif status == "DIGITAL_COMPLETED":
+            if assigned_id:
+                ai_reply = (
+                    f"🎉 Pemindahan kamar ke <strong>Kamar {assigned_id}</strong> telah resmi diproses di sistem Front Office. "
+                    f"Kunci kamar baru siap diambil di resepsionis. Selamat beristirahat!"
+                )
+            else:
+                ai_reply = res_text or "Permintaan Anda telah berhasil diselesaikan secara digital."
+        elif status == "CLOSED_GUEST_DECLINED":
+            ai_reply = "Baik, tawaran pindah kamar dibatalkan sesuai pilihan Anda. Teknisi tetap memperbaiki AC."
+        elif status == "CLOSED_BY_STAFF":
+            note = case.get("closed_note") or "Selesai ditangani"
+            ai_reply = f"Kasus telah diselesaikan oleh Staf Hotel. Catatan: <em>{note}</em>"
+        elif step_idx > 0:
+            ai_reply = "Saya sedang memproses keluhan Anda dan berkoordinasi dengan departemen terkait..."
+        else:
+            ai_reply = "Halo! Saya Asisten AI Hotel Nusantara. Ada yang bisa saya bantu terkait masa inap Anda?"
+
+        in_transit_badge = ""
+        if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
+            in_transit_badge = """
+            <div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.72rem; padding: 4px 12px; border-radius: 12px; border: 1px solid #FDE68A;">
+                ⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations memeriksa fisik kamar...
+            </div>
+            """
+
+        st.markdown(
+            f"""
+            <div style="border-radius: 14px; border: 1px solid #CBD5E1; box-shadow: 0 4px 15px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 12px;">
+                <!-- Header -->
+                <div style="background: #075E54; color: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🏨</div>
+                        <div>
+                            <div style="font-weight: bold; font-size: 0.92rem; color: white;">Hotel Nusantara Concierge</div>
+                            <div style="font-size: 0.70rem; color: #A7F3D0;">🟢 Online · ACE Mobile Agent</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.72rem; background: rgba(255,255,255,0.18); padding: 3px 8px; border-radius: 10px; color: white;">
+                        Tamu: {room_id}
+                    </div>
+                </div>
+                <!-- Chat Canvas -->
+                <div style="padding: 14px 12px; min-height: 190px; display: flex; flex-direction: column; gap: 10px;">
+                    <div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.68rem; padding: 2px 8px; border-radius: 6px;">
+                        HARI INI
+                    </div>
+                    <!-- Guest Bubble -->
+                    <div style="align-self: flex-start; max-width: 85%; background: white; padding: 8px 12px; border-radius: 0 12px 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.68rem; font-weight: 600; color: #0284C7; margin-bottom: 1px;">👤 Anda (Kamar {room_id})</div>
+                        <div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">"{guest_msg}"</div>
+                        <div style="text-align: right; font-size: 0.60rem; color: #94A3B8; margin-top: 3px;">14:02 ✓✓</div>
+                    </div>
+                    {in_transit_badge}
+                    <!-- Agent Bubble -->
+                    <div style="align-self: flex-end; max-width: 85%; background: #DCF8C6; padding: 8px 12px; border-radius: 12px 0 12px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.68rem; font-weight: 600; color: #065F46; margin-bottom: 1px;">🤖 Nusantara AI Concierge</div>
+                        <div style="font-size: 0.88rem; color: #1E293B; line-height: 1.35;">{ai_reply}</div>
+                        <div style="text-align: right; font-size: 0.60rem; color: #059669; margin-top: 3px;">14:02 ✓✓</div>
+                    </div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Quick Guest Reply confirmation buttons when waiting guest
+        if status == "WAITING_GUEST":
+            with st.container(border=True):
+                st.markdown(f"**🏨 Tawaran Pindah Kamar:** **{case.get('proposed_room_id')}** (Gratis Setara)")
+                b_cols = st.columns(2)
+                if b_cols[0].button(
+                    f"✅ Setuju Pindah ke {case.get('proposed_room_id')}",
+                    key="sim_center_accept",
+                    type="primary",
                     use_container_width=True,
                 ):
-                    _start_scenario(model, sid, mode)
+                    simulation.submit_guest_choice(True, actor="GUEST")
+                    simulation.run_until_pause()
+                    st.toast(f"✅ Disetujui! Kamar dipindahkan ke {case.get('proposed_room_id')}", icon="🎉")
+                    st.rerun()
+                if b_cols[1].button(
+                    "❌ Tolak Tawaran",
+                    key="sim_center_decline",
+                    use_container_width=True,
+                ):
+                    simulation.submit_guest_choice(False, actor="GUEST")
+                    st.toast("❌ Tawaran ditolak", icon="🛎️")
                     st.rerun()
 
-    with col_custom:
-        with st.container(border=True):
-            st.markdown("**✍️ Simulasi Permintaan Tamu Kustom:**")
+        elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
+            st.warning("⚠️ Kasus memerlukan keputusan staf. Buka tab **Meja Kerja Staf Hotel** untuk meninjau.")
+
+        elif status == "DIGITAL_COMPLETED":
+            st.success("🎉 Kasus berhasil diselesaikan secara digital tanpa intervensi manual.")
+
+        with st.expander("✍️ Kirim Permintaan Tamu Kustom (Opsional)", expanded=False):
             cat_choice = st.selectbox(
                 "Kategori Permintaan",
                 [
@@ -2109,16 +2257,16 @@ def render_guest_portal(
                     "🕐 Informasi Hotel (Check-in/Check-out)",
                     "💰 Sengketa Tagihan / Folio",
                 ],
-                key="guest_custom_cat",
+                key="guest_custom_cat_unified",
             )
             st.text_input(
                 "Tulis Pesan Anda",
                 placeholder="Contoh: AC kamar saya rusak, ingin pindah kamar...",
-                key="guest_custom_text",
+                key="guest_custom_text_unified",
             )
             if st.button(
                 "🚀 Kirim ke Asisten AI",
-                key="guest_custom_submit",
+                key="guest_custom_submit_unified",
                 use_container_width=True,
                 type="primary",
             ):
@@ -2133,173 +2281,37 @@ def render_guest_portal(
                 _start_scenario(model, target_s, mode)
                 st.rerun()
 
-    st.divider()
-
-    # 2. Status Percakapan & Respon AI
-    if snapshot is None or simulation is None:
-        st.info("Pilih salah satu layanan di atas untuk memulai interaksi dengan asisten hotel.")
-        return
-
-    _render_live_flow_stepper(snapshot)
-
-    case = snapshot.get("case")
-    guest_msg = case.get("guest_message") if case else "Belum ada pesan."
-    status = case.get("status") if case else "CREATED"
-
-    st.markdown("### 📱 Percakapan Tamu & Asisten AI (WhatsApp Omnichannel)")
-
-    # Prepare chat context
-    room_id = case.get("original_room_id", "R101") if case else "R101"
-    proposed_id = case.get("proposed_room_id") if case else None
-    assigned_id = case.get("assigned_room_id") if case else None
-    mig_info = snapshot.get("migration")
-    mig_stage = mig_info.get("stage") if mig_info else None
-    step_idx = snapshot.get("step_index", 0)
-    res_text = _result_text(snapshot)
-
-    # Determine AI Concierge response text
-    if status == "WAITING_GUEST":
-        ai_reply = (
-            f"Kamar Anda {room_id} terdeteksi mengalami kendala teknis (AC bocor). "
-            f"Saya telah memeriksa langsung ke departemen Housekeeping dan menemukan kamar pengganti setara yaitu "
-            f"<strong>Kamar {proposed_id}</strong> yang sudah <strong>BERSIH & SIAP HUNI</strong> tanpa biaya tambahan. "
-            f"Mohon konfirmasi apakah Anda berkenan pindah?"
-        )
-    elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
-        ai_reply = (
-            "Permintaan Anda (upgrade gratis / sengketa tagihan) memerlukan persetujuan manajerial. "
-            "Keluhan Anda telah kami teruskan langsung ke Manajer Hotel untuk peninjauan khusus dan perlindungan tarif."
-        )
-    elif status == "DIGITAL_COMPLETED":
-        if assigned_id:
-            ai_reply = (
-                f"🎉 Pemindahan kamar ke <strong>Kamar {assigned_id}</strong> telah resmi diproses di sistem Front Office. "
-                f"Kunci kamar baru siap diambil di resepsionis. Selamat beristirahat!"
-            )
-        else:
-            ai_reply = res_text or "Permintaan Anda telah berhasil diselesaikan oleh asisten hotel."
-    elif status == "CLOSED_GUEST_DECLINED":
-        ai_reply = "Baik, tawaran pindah kamar dibatalkan sesuai permintaan Anda. Tiket perbaikan teknisi tetap kami pantau."
-    elif status == "CLOSED_BY_STAFF":
-        note = case.get("closed_note") or "Selesai ditangani"
-        ai_reply = f"Kasus Anda telah selesai ditangani oleh Staf Hotel. Catatan staf: <em>{note}</em>"
-    elif step_idx > 0:
-        ai_reply = "Saya sedang memproses keluhan Anda dan berkoordinasi dengan departemen terkait..."
-    else:
-        ai_reply = "Halo! Saya Asisten AI Hotel Nusantara. Ada yang bisa saya bantu terkait kamar atau layanan hotel Anda?"
-
-    # WhatsApp Smartphone Mockup
-    in_transit_badge = ""
-    if mig_stage in ("INITIATED", "PREPARED", "DEPARTED") or (step_idx >= 2 and status not in ("DIGITAL_COMPLETED", "CLOSED_BY_STAFF")):
-        in_transit_badge = """
-        <div style="align-self: center; background: #FFFBEB; color: #92400E; font-size: 0.74rem; padding: 6px 14px; border-radius: 12px; border: 1px solid #FDE68A; margin: 4px 0;">
-            ⚡ <strong>Investigasi Otonom:</strong> Agen berpindah ke Node Operations untuk memeriksa fisik kamar & SOP...
-        </div>
-        """
-
-    st.markdown(
-        f"""
-        <div style="max-width: 820px; margin: 0 auto; border-radius: 16px; border: 1px solid #CBD5E1; box-shadow: 0 4px 20px rgba(0,0,0,0.06); overflow: hidden; background: #EFEAE2; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 16px;">
-            <!-- Header -->
-            <div style="background: #075E54; color: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #128C7E; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">🏨</div>
-                    <div>
-                        <div style="font-weight: bold; font-size: 0.98rem; color: white;">Hotel Nusantara Concierge</div>
-                        <div style="font-size: 0.74rem; color: #A7F3D0;">🟢 Online · Didukung ACE Mobile Agent</div>
-                    </div>
-                </div>
-                <div style="font-size: 0.78rem; background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 12px; color: white;">
-                    Tamu: G001 (Kamar {room_id})
-                </div>
-            </div>
-            <!-- Chat Canvas -->
-            <div style="padding: 18px 16px; min-height: 200px; display: flex; flex-direction: column; gap: 12px;">
-                <div style="align-self: center; background: rgba(255,255,255,0.9); color: #64748B; font-size: 0.70rem; padding: 3px 10px; border-radius: 8px; font-weight: 500;">
-                    HARI INI
-                </div>
-                <!-- Guest Bubble -->
-                <div style="align-self: flex-start; max-width: 82%; background: white; padding: 10px 14px; border-radius: 0 14px 14px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                    <div style="font-size: 0.72rem; font-weight: 600; color: #0284C7; margin-bottom: 2px;">👤 Anda (Tamu Kamar {room_id})</div>
-                    <div style="font-size: 0.92rem; color: #1E293B; line-height: 1.4;">"{guest_msg}"</div>
-                    <div style="text-align: right; font-size: 0.62rem; color: #94A3B8; margin-top: 4px;">14:02 ✓✓</div>
-                </div>
-                {in_transit_badge}
-                <!-- Agent Bubble -->
-                <div style="align-self: flex-end; max-width: 82%; background: #DCF8C6; padding: 10px 14px; border-radius: 14px 0 14px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                    <div style="font-size: 0.72rem; font-weight: 600; color: #065F46; margin-bottom: 2px;">🤖 Nusantara AI Concierge</div>
-                    <div style="font-size: 0.92rem; color: #1E293B; line-height: 1.4;">{ai_reply}</div>
-                    <div style="text-align: right; font-size: 0.62rem; color: #059669; margin-top: 4px;">14:02 ✓✓</div>
-                </div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    if status == "WAITING_GUEST":
-        with st.container(border=True):
-            st.markdown(f"#### 🏨 Konfirmasi Tamu: Tawaran Kamar Pengganti **{case.get('proposed_room_id')}**")
-            p_cols = st.columns(3)
-            p_cols[0].metric("Kamar Asal", case.get("original_room_id"))
-            p_cols[1].metric("Kamar Pengganti", case.get("proposed_room_id"))
-            p_cols[2].metric("Biaya Tambahan", "Rp0 (Gratis Setara)")
-
-            b_cols = st.columns(2)
-            if b_cols[0].button(
-                f"✅ Setuju Pindah ke Kamar {case.get('proposed_room_id')}",
-                key="guest_portal_accept",
-                type="primary",
-                use_container_width=True,
-            ):
-                simulation.submit_guest_choice(True, actor="GUEST")
-                simulation.run_until_pause()
-                st.session_state["autoplay"] = False
-                st.toast(f"✅ Anda telah menyetujui pindah ke kamar {case.get('proposed_room_id')}! Kamar resmi siap huni.", icon="🎉")
-                st.rerun()
-            if b_cols[1].button(
-                "❌ Tolak & Tetap di Kamar Ini",
-                key="guest_portal_decline",
-                use_container_width=True,
-            ):
-                simulation.submit_guest_choice(False, actor="GUEST")
-                st.session_state["autoplay"] = False
-                st.toast("❌ Anda menolak tawaran kamar pengganti.", icon="🛎️")
-                st.rerun()
-
-    elif status == "WAITING_HUMAN":
-        st.warning(
-            "⚠️ Permintaan Anda memerlukan peninjauan khusus dari staf atau manajer Front Office kami. "
-            "Tim kami saat ini sedang menindaklanjuti permohonan Anda."
-        )
-
-    elif status == "DIGITAL_COMPLETED":
-        st.success(f"🎉 Selesai: {res_text or 'Permintaan Anda telah berhasil ditangani oleh sistem.'}")
-
-    elif status == "CLOSED_GUEST_DECLINED":
-        st.info("ℹ️ Anda telah menolak tawaran kamar pengganti. Tiket perbaikan teknisi tetap kami jalankan.")
-
-    elif status == "CLOSED_BY_STAFF":
-        st.success(f"✅ Kasus telah diselesaikan dan ditutup oleh Staf Hotel. Catatan: {case.get('closed_note') or '-'}")
-
-    # Visual Room Map & Architecture Topology in Expander
-    with st.expander("🏢 Lihat Denah Status Kamar & Topologi Agen (Real-Time)", expanded=False):
+    with col_right:
         _render_interactive_room_map(snapshot, simulation)
         st.divider()
         _render_live_migration_topology(snapshot)
+        with st.expander("⚖️ Metrik Keputusan & Ambang Batas Risiko", expanded=False):
+            _decision_panel(snapshot)
 
-    # Advance step helper if pending
-    if snapshot.get("has_pending_work"):
-        st.caption("Pekerjaan agen masih berlangsung di latar belakang:")
-        c_step1, c_step2 = st.columns(2)
-        with c_step1:
-            if st.button("⏩ Jalankan Langkah Berikutnya", key="guest_portal_step", type="secondary", use_container_width=True):
-                simulation.step()
-                st.rerun()
-        with c_step2:
-            if st.button("⚡ Selesaikan Seluruh Alur Otomatis", key="guest_portal_finish", type="primary", use_container_width=True):
-                simulation.run_until_pause()
-                st.rerun()
+
+render_guest_portal = render_simulation_center
+
+
+def render_unified_evaluation_audit(
+    snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any
+) -> None:
+    """Consolidated Evaluation, Business ROI, Database Audit, and Comprehension Suite."""
+    e_tab1, e_tab2, e_tab3, e_tab4 = st.tabs(
+        [
+            "🏨 Dampak Bisnis & ROI",
+            "📊 Benchmark Mobile vs Static & ML",
+            "🔍 Observabilitas & Audit DB",
+            "📖 Cara Kerja & Analogi Konsep",
+        ]
+    )
+    with e_tab1:
+        render_executive_dashboard(snapshot, simulation, model)
+    with e_tab2:
+        render_evaluation_tab(model)
+    with e_tab3:
+        render_trace_tab(snapshot, simulation)
+    with e_tab4:
+        render_comprehension_tab()
 
 
 def render_staff_portal(
