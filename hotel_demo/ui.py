@@ -17,38 +17,38 @@ MODE_LABELS = {"mobile": "Mobile Agent", "static": "Static Agent"}
 SCENARIO_DESCRIPTIONS: Dict[str, Dict[str, str]] = {
     "S01": {
         "judul": "AC Rusak — Kamar Pengganti Tersedia",
-        "deskripsi": "Tamu melaporkan AC rusak dan minta pindah ke kamar setara.",
-        "hasil": "Migrasi agen → inspeksi R102 (DIRTY) & R103 (READY) → proposal → persetujuan tamu → commit",
+        "deskripsi": "Tamu melaporkan kerusakan fasilitas AC dan memohon pemindahan ke kamar setara.",
+        "hasil": "Migrasi agen → inspeksi R102 (DIRTY) & R103 (READY) → proposal → konsensus tamu → komitmen atomik",
         "emoji": "❄️",
     },
     "S02": {
-        "judul": "AC Rusak — Minta Upgrade Gratis",
-        "deskripsi": "Kamar setara habis, tamu minta upgrade gratis.",
-        "hasil": "Migrasi tetap terjadi, evidence R201 terkumpul → WAITING_HUMAN (upgrade butuh staf)",
+        "judul": "AC Rusak — Permintaan Upgrade Bebas Biaya",
+        "deskripsi": "Inventaris kamar setara habis; tamu menuntut upgrade kelas kamar tanpa biaya tambahan.",
+        "hasil": "Migrasi koper bukti R201 → Policy Guardrail mengunci otomasi → eskalasi manajerial (WAITING_HUMAN)",
         "emoji": "⬆️",
     },
     "S03": {
         "judul": "Sengketa Tagihan Minibar",
-        "deskripsi": "Tamu tidak mengenali tagihan minibar Rp150.000.",
-        "hasil": "Billing membaca folio → eskalasi wajib → WAITING_HUMAN",
+        "deskripsi": "Tamu mengajukan klaim ketidaksesuaian transaksi minibar Rp150.000 pada folio tagihan.",
+        "hasil": "BillingAgent membaca folio → pemisahan wewenang finansial → eskalasi wajib (WAITING_HUMAN)",
         "emoji": "💰",
     },
     "S04": {
-        "judul": "Informasi Jam Check-In",
-        "deskripsi": "Tamu bertanya jam check-in hotel.",
-        "hasil": "Jawaban FAQ lokal: 14.00 → selesai tanpa tiket/migrasi",
+        "judul": "Informasi Waktu Check-In",
+        "deskripsi": "Tamu menanyakan jadwal resmi check-in dan kebijakan kedatangan hotel.",
+        "hasil": "Resolusi instan ConciergeAgent via repositori FAQ lokal (14.00 WIB) tanpa beban tiket/migrasi",
         "emoji": "🕐",
     },
     "S05": {
-        "judul": "Permintaan Handuk",
-        "deskripsi": "Tamu minta handuk diantar ke kamar.",
-        "hasil": "Tiket housekeeping dibuat (PENDING → DONE oleh staf)",
+        "judul": "Permintaan Handuk Tambahan",
+        "deskripsi": "Tamu mengajukan permintaan perlengkapan amenities handuk tambahan ke kamar.",
+        "hasil": "Penerbitan tiket tugas fisik Housekeeping (alur kerja: PENDING → IN_PROGRESS → DONE)",
         "emoji": "🛁",
     },
     "S06": {
-        "judul": "Rincian Tagihan",
-        "deskripsi": "Tamu minta tampilkan rincian tagihan.",
-        "hasil": "Folio F01+F02 ditampilkan, total Rp650.000, tanpa perubahan",
+        "judul": "Rincian Folio Tagihan",
+        "deskripsi": "Tamu memohon transparansi rincian item transaksi biaya menginap.",
+        "hasil": "Verifikasi folio F01+F02 (Rp650.000); disajikan transparan tanpa perubahan saldo",
         "emoji": "🧾",
     },
     "S07": {
@@ -342,64 +342,64 @@ def _start_scenario(model: Any, scenario_id: str, mode: str) -> None:
 
 def render_story_cards(model: Any) -> None:
     """Renders 4 interactive story scenario cards for quick one-click demo."""
-    st.markdown("### 🎬 Pilih Skenario Cerita Demo Interaktif")
-    st.caption("Pilih salah satu kasus nyata di bawah ini untuk memulai simulasi langsung:")
+    st.markdown("### 🎬 Pilih Kasus Simulasi Operasional (Live Demo)")
+    st.caption("Pilih salah satu studi kasus operasional hotel di bawah ini untuk memulai simulasi langsung:")
 
     c1, c2 = st.columns(2)
     with c1:
         with st.container(border=True):
-            st.markdown("#### ❄️ Cerita 1: AC Bocor Tengah Malam (Otomatis Penuh)")
+            st.markdown("#### ❄️ Kasus 1: Kerusakan Fasilitas Kamar (Resolusi Otonom Penuh)")
             st.markdown(
                 """
-                - **Tamu:** Pak Budi (Kamar 101)
-                - **Situasi:** AC kamar bocor dan panas jam 01:00 pagi. Butuh kamar pengganti.
-                - **Alur Agen:** Triase -> Migrasi ke Operations -> Verifikasi kamar bersih R103 -> Permintaan persetujuan tamu -> Kamar dipindahkan.
+                - **Tamu:** Tamu Reservasi (Kamar 101)
+                - **Situasi:** Malafungsi AC kamar; membutuhkan relokasi ke kamar setara yang siap huni.
+                - **Alur Agen:** Triase intent -> Migrasi koper state ke Operations -> Verifikasi fisik R103 (READY) -> Konsensus tamu -> Komitmen atomik.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 1 (AC Bocor)", key="story_card_s01", type="primary", use_container_width=True):
+            if st.button("▶️ Jalankan Kasus 1 (Resolusi Otonom)", key="story_card_s01", type="primary", use_container_width=True):
                 _start_scenario(model, "S01", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 💰 Cerita 3: Sengketa Tagihan Minibar (Eskalasi)")
+            st.markdown("#### 💰 Kasus 3: Sengketa Folio Keuangan (Eskalasi Otorisasi)")
             st.markdown(
                 """
-                - **Tamu:** Tamu Demo (Kamar 101)
-                - **Situasi:** Tamu tidak mengenali tagihan minibar Rp150.000 dan meminta penghapusan.
-                - **Keputusan Agen:** Billing membaca folio, tetapi perubahan tagihan wajib ditinjau staf.
+                - **Tamu:** Tamu Reservasi (Kamar 101)
+                - **Situasi:** Klaim ketidaksesuaian transaksi minibar Rp150.000 pada folio tagihan.
+                - **Kepatuhan Tata Kelola:** BillingAgent membaca folio; penyesuaian saldo keuangan wajib melalui tinjauan staf berwenang.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 3 (Sengketa Tagihan)", key="story_card_s03", use_container_width=True):
+            if st.button("▶️ Jalankan Kasus 3 (Sengketa Keuangan)", key="story_card_s03", use_container_width=True):
                 _start_scenario(model, "S03", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
 
     with c2:
         with st.container(border=True):
-            st.markdown("#### 🛡️ Cerita 2: Tamu Minta Suite Mewah (Proteksi Biaya)")
+            st.markdown("#### 🛡️ Kasus 2: Penuntutan Kompensasi Eksesif (Proteksi Kebijakan)")
             st.markdown(
                 """
-                - **Tamu:** Ibu Sarah (Kamar 201)
-                - **Situasi:** AC bermasalah, menuntut ganti rugi kamar Suite mewah gratis.
-                - **Proteksi Finansial:** AI mengunci otomasi karena batas kebijakan kompensasi dilanggar. Kasus dieskalasi ke Manajer Manusia.
+                - **Tamu:** Tamu Reservasi (Kamar 201)
+                - **Situasi:** Malafungsi fasilitas; menuntut kompensasi upgrade kelas Suite mewah tanpa biaya.
+                - **Proteksi Kebijakan:** Policy Guardrail mengunci otomasi karena melanggar batas kewenangan biaya. Kasus dialihkan ke otorisasi Manajer.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 2 (Proteksi Finansial)", key="story_card_s02", use_container_width=True):
+            if st.button("▶️ Jalankan Kasus 2 (Proteksi Kebijakan)", key="story_card_s02", use_container_width=True):
                 _start_scenario(model, "S02", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
 
         with st.container(border=True):
-            st.markdown("#### 🕐 Cerita 4: Informasi Check-In (Concierge)")
+            st.markdown("#### 🕐 Kasus 4: Layanan Informasi Tamu (Resolusi Instan Front Office)")
             st.markdown(
                 """
-                - **Tamu:** Tamu Demo (Kamar 105)
-                - **Situasi:** Menanyakan jam check-in hotel.
-                - **Penanganan Cepat:** Agen concierge menjawab dari FAQ lokal tanpa tiket fisik atau migrasi.
+                - **Tamu:** Tamu Reservasi (Kamar 105)
+                - **Situasi:** Permintaan informasi jadwal operasional check-in dan fasilitas hotel.
+                - **Penanganan Efisien:** ConciergeAgent merespons instan dari repositori FAQ lokal tanpa transmisi tiket fisik atau migrasi.
                 """
             )
-            if st.button("▶️ Jalankan Cerita 4 (Informasi Check-In)", key="story_card_s04", use_container_width=True):
+            if st.button("▶️ Jalankan Kasus 4 (Layanan Informasi)", key="story_card_s04", use_container_width=True):
                 _start_scenario(model, "S04", "mobile")
                 st.session_state["autoplay"] = True
                 st.rerun()
@@ -642,9 +642,9 @@ def render_presenter_hud(
 
     # Autoplay speed configuration
     speed_options = {
-        3.5: "🐢 Santai (3.5s)",
-        2.0: "🚶 Nyaman (2.0s)",
-        1.0: "🐇 Cepat (1.0s)",
+        3.5: "Santai (3.5s)",
+        2.0: "Standar (2.0s)",
+        1.0: "Cepat (1.0s)",
     }
     current_speed = st.session_state.get("autoplay_speed", 2.0)
 
@@ -860,8 +860,8 @@ def render_universal_action_bar(
         gt_c1, gt_c2, gt_c3 = st.columns(3)
         with gt_c1:
             with st.container(border=True):
-                st.markdown("**❄️ Langkah 1: Otomasi & Migrasi**")
-                st.caption("Kasus S01: AC rusak, agen bermigrasi ke operasi, tolak kamar kotor R102, alokasikan kamar bersih R103.")
+                st.markdown("**❄️ Langkah 1: Resolusi Otonom & Migrasi State**")
+                st.caption("Kasus S01: Verifikasi fisik lokal di database Housekeeping; eliminasi kamar kotor R102 dan alokasi kamar bersih R103 secara otonom.")
                 if st.button("▶️ Putar Demo 1 (S01)", key="guided_tour_s01", use_container_width=True, type="primary"):
                     _start_scenario(model, "S01", "mobile")
                     st.session_state["autoplay"] = True
@@ -869,8 +869,8 @@ def render_universal_action_bar(
                     st.rerun()
         with gt_c2:
             with st.container(border=True):
-                st.markdown("**🛡️ Langkah 2: Proteksi Biaya (Guardrail)**")
-                st.caption("Kasus S02: Tamu minta kamar Deluxe mewah gratis, Policy Guardrail mengunci otomasi agar tidak bocor biaya.")
+                st.markdown("**🛡️ Langkah 2: Proteksi Kebijakan & Otorisasi Manajerial**")
+                st.caption("Kasus S02: Permintaan upgrade di luar hak reservasi ditahan oleh Policy Guardrail guna memproteksi margin hotel (Zero Cost Leakage).")
                 if st.button("▶️ Putar Demo 2 (S02)", key="guided_tour_s02", use_container_width=True):
                     _start_scenario(model, "S02", "mobile")
                     st.session_state["autoplay"] = True
@@ -1413,21 +1413,21 @@ def _render_interactive_room_map(
             desc = f"Dihuni: <b>{occ}</b><br>✨ Kamar Siap & Nyaman"
             icon = "🏨"
         elif maint:
-            badge = "🔧 KOSONG (PERLU SERVIS)"
+            badge = "🔧 MAINTENANCE (SERVIS)"
             badge_color = "#D97706"
             bg = "#FFFBEB"
             border = "1px solid #F59E0B"
             desc = "Status: Kosong<br>Menunggu Teknisi AC"
             icon = "🛠️"
         elif clean == "dirty":
-            badge = "🧹 KOTOR (PERLU CUCI)"
+            badge = "🧹 DIRTY (HOUSEKEEPING)"
             badge_color = "#EA580C"
             bg = "#FFF7ED"
             border = "1px solid #FB923C"
-            desc = "Status: Kosong<br>Antrean Housekeeping"
+            desc = "Status: Kosong<br>Antrean Pembersihan"
             icon = "🛏️"
         else:
-            badge = "✨ BERSIH & SIAP HUNI"
+            badge = "✨ READY (SIAP HUNI)"
             badge_color = "#059669"
             bg = "#ECFDF5"
             border = "2px solid #10B981"
@@ -2249,7 +2249,7 @@ def render_simulation_center(
         case_status = snapshot.get("case", {}).get("status") if snapshot and snapshot.get("case") else None
 
         with col_speed:
-            speed_map = {3.5: "🐢 3.5s", 2.0: "🚶 2.0s", 1.0: "🐇 1.0s"}
+            speed_map = {3.5: "Santai (3.5s)", 2.0: "Standar (2.0s)", 1.0: "Cepat (1.0s)"}
             cur_speed = float(st.session_state.get("autoplay_speed", 2.0))
             chosen_speed = st.selectbox(
                 "Tempo Putar",
@@ -2412,19 +2412,19 @@ def render_simulation_center(
             )
         elif status in ("WAITING_HUMAN", "HUMAN_HANDLING"):
             ai_reply = (
-                "Permintaan Anda memerlukan peninjauan manajerial khusus untuk perlindungan kebijakan hotel. "
-                "Keluhan Anda telah diteruskan langsung ke Manajer Hotel di Meja Kerja Staf."
+                "Permintaan kompensasi Anda memerlukan peninjauan manajerial sesuai kebijakan tata kelola hotel. "
+                "Laporan insiden telah diteruskan langsung ke Manajer Operasional di Meja Kerja Staf."
             )
         elif status == "DIGITAL_COMPLETED":
             if assigned_id:
                 ai_reply = (
                     f"🎉 Pemindahan kamar ke **Kamar {assigned_id}** telah resmi diproses di sistem Front Office. "
-                    f"Kunci kamar baru siap diambil di resepsionis. Selamat beristirahat!"
+                    f"Kunci kamar baru siap diambil di resepsionis. Selamat menikmati masa inap Anda!"
                 )
             else:
                 ai_reply = res_text or "Permintaan Anda telah berhasil diselesaikan secara digital."
         elif status == "CLOSED_GUEST_DECLINED":
-            ai_reply = "Baik, tawaran pindah kamar dibatalkan sesuai pilihan Anda. Teknisi tetap memperbaiki AC."
+            ai_reply = "Permintaan pemindahan kamar telah dibatalkan sesuai preferensi Anda. Tiket penanganan teknisi tetap aktif untuk memperbaiki kendala AC di kamar Anda."
         elif status == "CLOSED_BY_STAFF":
             note = case.get("closed_note") or "Selesai ditangani"
             ai_reply = f"Kasus telah diselesaikan oleh Staf Hotel. Catatan: *{note}*"
@@ -2802,7 +2802,7 @@ def render_visual_node_map(snapshot: Optional[Dict[str, Any]]) -> None:
             f"""
             <div style="{op_border} padding: 14px; border-radius: 10px; min-height: 140px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <strong style="color: #065F46; font-size: 1.05rem;">🧹 Operasional & Gudang</strong>
+                    <strong style="color: #065F46; font-size: 1.05rem;">🔧 Operasional & Housekeeping</strong>
                     <span style="font-size: 0.75rem; font-weight: bold; color: #059669;">{op_badge}</span>
                 </div>
                 <div style="font-size: 0.85rem; color: #475569; margin-top: 6px;">
@@ -2826,17 +2826,17 @@ def render_comprehension_tab() -> None:
 
     st.divider()
 
-    # Section 1: Storyboard Komik Alur Kasus
-    st.markdown("### 🎨 Komik Alur Kasus: Perjalanan 1 Menit Masalah Pak Budi")
-    st.caption("Bagaimana keluhan AC bocor di kamar 101 diselesaikan tanpa antre di meja depan:")
+    # Section 1: Storyboard Alur Penanganan Kasus
+    st.markdown("### 📋 Storyboard Alur Kasus: Siklus Resolusi End-to-End (< 1 Menit)")
+    st.caption("Visualisasi komparatif tahapan penanganan komplain fasilitas kamar tanpa friksi antrean lobi:")
 
     panels = [
-        ("1. Masalah Jam 01:00 Pagi", "Pak Budi di Kamar 101 mengeluh AC bocor dan berisik. Pak Budi mengirim pesan komplain lewat ponselnya."),
-        ("2. AI Menganalisis Keluhan", "Asisten AI membaca keluhan, memeriksa jatah kamar pengganti setara (Standard), dan menyiapkan proses verifikasi."),
-        ("3. Mengemas Koper State", "Agen mengemas koper data kasus (tujuan, kandidat kamar) dan menyegelnya secara digital dengan hash SHA-256."),
-        ("4. Cek Fisik di Housekeeping", "Agen tiba di database operasional. Menemukan R102 masih kotor (DIRTY) sehingga menolaknya, lalu memilih R103 yang bersih."),
-        ("5. Persetujuan di HP Tamu", "HP Pak Budi berbunyi: 'Kamar R103 bersih siap huni. Apakah Anda setuju pindah?'. Pak Budi klik [Setuju Pindah]."),
-        ("6. Kunci Kamar Aktif!", "Reservasi resmi berpindah ke R103. Pak Budi tidur nyenyak, hotel terbebas dari ulasan bintang 1!")
+        ("1. Laporan Kerusakan Fasilitas", "Tamu di Kamar 101 melaporkan malafungsi AC melalui kanal komunikasi layanan digital hotel."),
+        ("2. Triase & Klasifikasi ML", "ScenarioScout mengidentifikasi intent, Orchestrator memvalidasi hak kamar setara (Standard), dan menyiapkan kueri inspeksi."),
+        ("3. Enkapsulasi Koper State", "Agen mengemas koper data kasus (tujuan & kandidat kamar) serta menyegelnya dengan hash kriptografis SHA-256."),
+        ("4. Verifikasi Fisik Housekeeping", "Mobile Investigator mendarat di node Operations; mendiskualifikasi R102 yang kotor (DIRTY) dan memilih R103 yang siap huni (READY)."),
+        ("5. Validasi Konsensus Tamu", "Perangkat tamu menerima proposal alokasi kamar R103 terverifikasi. Tamu memberikan persetujuan eksplisit (Human-in-the-Loop)."),
+        ("6. Komitmen Transaksi Atomik", "Mutasi reservasi tuntas dalam SLA < 1 menit. Kunci kamar aktif dan kepuasan tamu terlindungi.")
     ]
 
     cols_p1 = st.columns(3)
@@ -2857,76 +2857,76 @@ def render_comprehension_tab() -> None:
 
     st.divider()
 
-    # Section 2: Kamus Analogi Kehidupan Nyata
-    st.markdown("### 💡 Kamus Istilah dengan Analogi Dunia Nyata")
-    st.caption("Pahami konsep teknis melalui perumpamaan sehari-hari yang mudah diingat:")
+    # Section 2: Kamus Analogi Terapan Sistem
+    st.markdown("### 💡 Kamus Konsep Sistem & Analogi Terapan")
+    st.caption("Pemahaman komparatif konsep teknis multi-agent melalui perumpamaan tata kelola enterprise:")
 
     an1, an2 = st.columns(2)
     with an1:
         with st.container(border=True):
-            st.markdown("#### 🧳 Mobile Agent (State Migration)")
+            st.markdown("#### 🧳 Mobile Agent (Migrasi State Antar-Node)")
             st.markdown(
                 """
-                - **Istilah Teknis:** Agen berpindah node membawa koper state.
-                - **Analogi Nyata:** Seperti **auditor pajak yang datang langsung membawa tas berkas ke pabrik**. Daripada meminta pabrik mengirimkan seluruh truk dokumen ke kantor lobi, auditor datang langsung mengecek ke gudang.
-                - **Keuntungan Bisnis:** Menghemat kuota jaringan dan menjaga rahasia data internal operasional tetap aman di tempatnya.
+                - **Konsep Teknis:** Agen berpindah node logis membawa koper state kasus terenkapsulasi.
+                - **Analogi Terapan:** Seperti **auditor internal yang mendatangi langsung gudang operasional** membawa berkas audit spesifik, alih-alih meminta seluruh basis data inventaris dikirim melintasi jaringan ke kantor depan.
+                - **Nilai Bisnis:** Memangkas konsumsi bandwidth jaringan hingga 64.9% dan menjaga integritas isolasi domain data lokal.
                 """
             )
         with st.container(border=True):
-            st.markdown("#### 🛡️ Policy Guardrail (Satpam Kebijakan)")
+            st.markdown("#### 🛡️ Policy Guardrail (Penegakan Aturan Bisnis)")
             st.markdown(
                 """
-                - **Istilah Teknis:** Aturan deterministik mandatory yang mengunci AI.
-                - **Analogi Nyata:** Seperti **satpam brankas bank**. Meskipun nasabah berteriak meminta uang lebih, satpam tidak akan membuka brankas tanpa izin tertulis dari manajer.
-                - **Keuntungan Bisnis:** Melindungi hotel dari tamu nakal yang menuntut kamar mewah gratis (anti-bocor biaya).
+                - **Konsep Teknis:** Aturan deterministik mandatory yang membatasi ambang batas kewenangan AI otonom.
+                - **Analogi Terapan:** Seperti **kontrol ganda pada otorisasi perbankan**. Akses nilai melebihi limit kompensasi wajib memperoleh persetujuan manajerial resmi, tanpa pengecualian.
+                - **Nilai Bisnis:** Mencegah kebocoran pendapatan (*Zero Cost Leakage*) akibat pemberian upgrade kamar sepihak tanpa otorisasi.
                 """
             )
 
     with an2:
         with st.container(border=True):
-            st.markdown("#### 📜 Checkpoint & Segel SHA-256")
+            st.markdown("#### 📜 Checkpoint & Validasi Kriptografis SHA-256")
             st.markdown(
                 """
-                - **Istilah Teknis:** Serialisasi JSON kanonik terverifikasi hash.
-                - **Analogi Nyata:** Seperti **surat resmi dengan cap lilin kerajaan**. Jika di tengah jalan ada yang membuka atau mengubah isinya, cap lilinnya rusak dan surat langsung ditolak.
-                - **Keuntungan Bisnis:** Menjamin data kamar tidak dimanipulasi atau rusak saat berpindah antar sistem.
+                - **Konsep Teknis:** Serialisasi JSON kanonik yang divalidasi melalui digest hash SHA-256 (ACE-MAMP v1.0).
+                - **Analogi Terapan:** Seperti **amplop diplomatik ber-segel anti-manipulasi (tamper-evident seal)**. Modifikasi sekecil apa pun pada koper di perjalanan akan membatalkan validasi hash dan ditolak node penerima.
+                - **Nilai Bisnis:** Menjamin keaslian dan integritas state kasus saat melintasi batas domain sistem perhotelan.
                 """
             )
         with st.container(border=True):
-            st.markdown("#### ⚡ Idempotency (Anti-Duplikasi Transaksi)")
+            st.markdown("#### ⚡ Idempotensi (Integritas Transaksi Atomik)")
             st.markdown(
                 """
-                - **Istilah Teknis:** Eksekusi berulang menghasilkan efek tunggal.
-                - **Analogi Nyata:** Seperti **tombol saklar lampu otomatis**. Ditekan 1 kali atau ditekan 10 kali, lampu tetap menyala (tidak meledak atau dobel transaksi).
-                - **Keuntungan Bisnis:** Mencegah mutasi kamar dobel saat tamu menekan tombol persetujuan berkali-kali karena sinyal HP lambat.
+                - **Konsep Teknis:** Karakteristik eksekusi berulang yang menghasilkan efek akhir tunggal yang konsisten.
+                - **Analogi Terapan:** Seperti **sakelar status biner terproteksi**. Ditekan satu kali maupun berulang kali akibat latensi koneksi, sistem menjamin hanya satu mutasi reservasi yang dieksekusi.
+                - **Nilai Bisnis:** Mencegah risiko alokasi kamar ganda atau duplikasi mutasi saldo reservasi pada basis data perhotelan.
                 """
             )
 
     st.divider()
 
-    # Section 3: Perbandingan Tradisional vs ACE
-    st.markdown("### ⚖️ Mengapa Sistem Ini Unggul: Tradisional vs ACE Mobile Agent")
+    # Section 3: Perbandingan Paradigma
+    st.markdown("### ⚖️ Komparasi Paradigma: Operasional Konvensional vs ACE Mobile Agent")
     comp_col1, comp_col2 = st.columns(2)
     with comp_col1:
         with st.container(border=True):
-            st.markdown("#### ❌ Sistem Tradisional (Telepon / API Manual)")
+            st.markdown("#### ❌ Sistem Konvensional (Koordinasi Manual & RPC)")
             st.markdown(
                 """
-                - **Waktu Penanganan:** 35 – 45 Menit (Telepon berulang-ulang ke berbagai bagian).
-                - **Risiko Kamar Kotor:** Tinggi (Resepsionis tidak tahu fisik kamar di lantai atas).
-                - **Risiko Pemerasan Tamu:** Staf panik memberikan upgrade Deluxe gratis tanpa izin.
-                - **Beban Staf:** Resepsionis sibuk mengangkat telepon keluhan alih-alih melayani tamu di lobi.
+                - **Siklus Resolusi:** 35 – 45 Menit (Koordinasi bertahap via telepon lintas-departemen).
+                - **Visibilitas Fisik:** Rendah (Front Office tidak memiliki akses status kebersihan real-time).
+                - **Risiko Biaya:** Tinggi (Kompensasi diskresioner staf berpotensi menggerus margin kamar).
+                - **Beban Kerja Staf:** Waktu produktif staf tersita untuk penanganan komplain rutin berulang.
                 """
             )
     with comp_col2:
         with st.container(border=True):
-            st.markdown("#### ✅ Sistem ACE (Mobile Agent Cerdas)")
+            st.markdown("#### ✅ Sistem ACE (Intelligent Mobile Agent)")
             st.markdown(
                 """
-                - **Waktu Penanganan:** **< 1 Menit** (Otomatis langsung di HP tamu).
-                - **Risiko Kamar Kotor:** **0% (Zero Double-Complaint)** karena diverifikasi fisik ke DB Housekeeping.
-                - **Proteksi Finansial:** **100% Terkunci** oleh Policy Guardrail.
-                - **Produktivitas Staf:** Staf fokus melayani tamu VIP, operasional rutin ditangani AI.
+                - **Siklus Resolusi:** **< 1 Menit** (Otomasi digital langsung di perangkat tamu).
+                - **Visibilitas Fisik:** **100% Terverifikasi (Zero Double-Complaint)** via audit lokal DB Housekeeping.
+                - **Proteksi Biaya:** **Zero Cost Leakage** berkat penegakan deterministik Policy Guardrail.
+                - **Efisiensi Kerja:** Staf fokus pada layanan bernilai tinggi, keluhan rutin diselesaikan otonom.
                 """
             )
 
