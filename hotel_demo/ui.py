@@ -2096,19 +2096,38 @@ def render_simulation_center(
     with c_play:
         st.write("")
         st.write("")
-        btn_cols = st.columns(3)
+        btn_cols = st.columns(4)
         has_pending = snapshot.get("has_pending_work", False) if snapshot else False
+        is_autoplay = st.session_state.get("autoplay", False)
+        case_status = snapshot.get("case", {}).get("status") if snapshot and snapshot.get("case") else None
+
         with btn_cols[0]:
+            if is_autoplay:
+                if st.button("⏸️ Jeda", key="sim_center_pause", use_container_width=True):
+                    st.session_state["autoplay"] = False
+                    st.rerun()
+            else:
+                can_play = has_pending and case_status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING")
+                if st.button(
+                    "▶️ Putar",
+                    key="sim_center_play",
+                    disabled=not can_play,
+                    type="primary" if can_play else "secondary",
+                    use_container_width=True,
+                ):
+                    st.session_state["autoplay"] = True
+                    st.rerun()
+        with btn_cols[1]:
             if st.button("⏩ Langkah", key="step_button", disabled=not has_pending, use_container_width=True):
                 if simulation:
                     simulation.step()
                     st.rerun()
-        with btn_cols[1]:
-            if st.button("⚡ Selesaikan", key="sim_center_finish", disabled=not has_pending, type="primary", use_container_width=True):
+        with btn_cols[2]:
+            if st.button("⚡ Selesai", key="sim_center_finish", disabled=not has_pending, use_container_width=True):
                 if simulation:
                     simulation.run_until_pause()
                     st.rerun()
-        with btn_cols[2]:
+        with btn_cols[3]:
             if st.button("🔄 Reset", key="sim_center_reset", use_container_width=True):
                 _start_scenario(model, selected_sid, mode)
                 st.rerun()
@@ -2287,6 +2306,13 @@ def render_simulation_center(
         _render_live_migration_topology(snapshot)
         with st.expander("⚖️ Metrik Keputusan & Ambang Batas Risiko", expanded=False):
             _decision_panel(snapshot)
+
+    # Autoplay runner loop
+    if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
+        speed = float(st.session_state.get("autoplay_speed", 1.8))
+        time.sleep(speed)
+        simulation.step()
+        st.rerun()
 
 
 render_guest_portal = render_simulation_center
