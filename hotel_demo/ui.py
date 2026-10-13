@@ -2284,8 +2284,7 @@ def render_simulation_center(
                     if sim_inst:
                         sim_inst.step()
                 else:
-                    with st.spinner("🤖 Agen sedang memproses langkah..."):
-                        simulation.step()
+                    simulation.step()
                 st.rerun()
         with col_b3:
             can_finish = has_pending or simulation is None
@@ -2311,6 +2310,39 @@ def render_simulation_center(
 
     # 2. Presenter Telemetry & Golden Talking Point Banner
     telemetry = get_presenter_telemetry(snapshot, simulation)
+    case_obj = snapshot.get("case")
+    c_status = case_obj.get("status") if case_obj else "CREATED"
+    s_idx = snapshot.get("step_index", 0)
+
+    # Live Agent Execution Banner (Prominently displayed during Auto-Play)
+    if is_autoplay and has_pending and c_status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
+        speed_val = float(st.session_state.get("autoplay_speed", 2.0))
+        st.markdown(
+            f"""
+            <div style="background: linear-gradient(135deg, #0B132B 0%, #1E293B 60%, #1E3A8A 100%); border: 1px solid #3B82F6; border-radius: 12px; padding: 14px 20px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25); color: #FFFFFF;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="display: inline-block; width: 12px; height: 12px; background-color: #38BDF8; border-radius: 50%; box-shadow: 0 0 10px #38BDF8;"></span>
+                        <span style="font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #93C5FD;">
+                            SIMULASI AGEN BERJALAN &bull; LANGKAH KE-{s_idx + 1}
+                        </span>
+                    </div>
+                    <span style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(96, 165, 250, 0.5); padding: 3px 12px; border-radius: 20px; font-size: 0.76rem; color: #DBEAFE; font-weight: 600;">
+                        ⏳ Tempo: {speed_val:.1f}s / langkah
+                    </span>
+                </div>
+                <div style="font-size: 1.02rem; font-weight: 600; color: #FFFFFF; line-height: 1.4; margin-bottom: 8px;">
+                    ⚡ {telemetry.get('action_headline', 'Memproses langkah simulasi...')}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.82rem; background: rgba(0, 0, 0, 0.25); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                    <div><span style="color: #94A3B8;">Pelaku:</span> <strong style="color: #67E8F9;">{telemetry.get('active_agent', 'Multi-Agent')}</strong></div>
+                    <div><span style="color: #94A3B8;">Lokasi:</span> <strong style="color: #FCD34D;">{telemetry.get('active_node', 'FRONT_OFFICE')}</strong></div>
+                    <div><span style="color: #94A3B8;">Status:</span> <strong style="color: #86EFAC;">{c_status}</strong></div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     with st.container(border=True):
         c_tel1, c_tel2 = st.columns([5, 7])
         with c_tel1:
@@ -2492,12 +2524,11 @@ def render_simulation_center(
         with st.expander("⚖️ Metrik Keputusan & Ambang Batas Risiko", expanded=False):
             _decision_panel(snapshot)
 
-    # 5. Autoplay runner loop with single loading spinner
+    # 5. Autoplay runner loop (Visual state is prominently displayed in the Live Agent Execution Banner above)
     if is_autoplay and has_pending and status not in ("WAITING_GUEST", "WAITING_HUMAN", "HUMAN_HANDLING"):
-        with st.spinner("🤖 Agen sedang memproses langkah simulasi berikutnya..."):
-            speed = float(st.session_state.get("autoplay_speed", 2.0))
-            time.sleep(speed)
-            simulation.step()
+        speed = float(st.session_state.get("autoplay_speed", 2.0))
+        time.sleep(speed)
+        simulation.step()
         st.rerun()
 
 
