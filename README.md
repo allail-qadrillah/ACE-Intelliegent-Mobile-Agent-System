@@ -78,11 +78,11 @@ python -m hotel_demo.ml --regenerate      # generate ulang dataset sintetis
 Antarmuka web telah dirancang khusus dengan standar enterprise untuk memudahkan demonstrasi di depan dosen penguji dan manajemen hotel:
 
 ### A. Fitur Unggulan Antarmuka:
-1. **🎙️ Panduan Presentasi 3-Menit (*3-Step Guided Tour*):**
-   - Bilah panduan interaktif di atas layar untuk mendemonstrasikan keunggulan sistem secara terstruktur:
-     - **Langkah 1 (S01):** Otomasi triase, migrasi koper data, eliminasi kamar kotor R102, dan alokasi kamar bersih R103.
-     - **Langkah 2 (S02):** Pengujian *Policy Guardrail* saat tamu meminta upgrade kamar mewah gratis (*Zero Cost Leakage*).
-     - **Langkah 3:** Panduan menuju Tab 3 untuk pembuktian kuantitatif efisiensi jaringan & kalkulator ROI.
+1. **🧭 Alur Evaluasi & Demonstrasi Arsitektur (*3-Phase Guided Demonstration*):**
+   - Bilah panduan terstruktur di atas layar untuk memverifikasi keunggulan arsitektur secara komprehensif:
+     - **Tahap 1 (S01):** Otomasi triase, migrasi koper data, eliminasi kamar kotor R102, dan alokasi kamar bersih R103 secara otonom.
+     - **Tahap 2 (S02):** Penegakan *Policy Guardrail* saat tamu meminta upgrade kamar mewah gratis (*Zero Cost Leakage*).
+     - **Tahap 3:** Verifikasi empiris di Tab 3 untuk pembuktian kuantitatif efisiensi jaringan & kalkulator ROI bisnis.
 2. **⏯️ Unified Mission Control & Auto-Play Simulation Player:**
    - Bilah kendali terpadu langsung di atas Tab 1 dengan tombol `[▶️ Putar]`, `[⏩ Langkah]`, `[⚡ Selesai]`, dan `[🔄 Reset]` yang langsung aktif sejak awal buka halaman (*instant ready*). Dilengkapi pilihan tempo pemutaran (*Santai 3.5s, Nyaman 2.0s, Cepat 1.0s*) dan indikator progres visual (*spinner status transparan*) yang mencegah double-loop.
 3. **💬 WhatsApp-Style Concierge Chat & Online Indicator:**

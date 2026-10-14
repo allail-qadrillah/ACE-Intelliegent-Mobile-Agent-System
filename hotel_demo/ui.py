@@ -852,33 +852,33 @@ def _render_mutation_diff_card(snapshot: Dict[str, Any], simulation: Simulation)
 def render_universal_action_bar(
     snapshot: Optional[Dict[str, Any]], simulation: Optional[Simulation], model: Any = None
 ) -> None:
-    """Universal Presenter Guide Expander and Critical Alerts on top of all tabs."""
-    with st.expander("🎙️ Panduan Presentasi 3-Menit (3-Step Guided Tour)", expanded=False):
+    """Universal Architectural Demonstration Guide and Critical Alerts on top of all tabs."""
+    with st.expander("🧭 Alur Evaluasi & Demonstrasi Arsitektur (3-Phase Guided Demonstration)", expanded=False):
         st.markdown(
-            "Gunakan panduan 3 langkah di bawah ini untuk mendemonstrasikan keunggulan arsitektur secara terstruktur di depan dosen/penguji:"
+            "Ikuti 3 tahapan pengujian terstruktur di bawah ini untuk memverifikasi resolusi otonom, penegakan *Policy Guardrail*, serta pembuktian empiris efisiensi *Mobile Agent*:"
         )
         gt_c1, gt_c2, gt_c3 = st.columns(3)
         with gt_c1:
             with st.container(border=True):
-                st.markdown("**❄️ Langkah 1: Resolusi Otonom & Migrasi State**")
+                st.markdown("**❄️ Tahap 1: Resolusi Otonom & Migrasi State**")
                 st.caption("Kasus S01: Verifikasi fisik lokal di database Housekeeping; eliminasi kamar kotor R102 dan alokasi kamar bersih R103 secara otonom.")
-                if st.button("▶️ Putar Demo 1 (S01)", key="guided_tour_s01", use_container_width=True, type="primary"):
+                if st.button("▶️ Uji Kasus 1 (S01: Resolusi Otonom)", key="guided_tour_s01", use_container_width=True, type="primary"):
                     _start_scenario(model, "S01", "mobile")
                     st.session_state["autoplay"] = True
-                    st.toast("▶️ Memutar Demo 1 (S01: Otomasi & Migrasi Koper)...", icon="❄️")
+                    st.toast("▶️ Menjalankan Evaluasi Tahap 1 (S01: Resolusi Otonom & Migrasi)...", icon="❄️")
                     st.rerun()
         with gt_c2:
             with st.container(border=True):
-                st.markdown("**🛡️ Langkah 2: Proteksi Kebijakan & Otorisasi Manajerial**")
+                st.markdown("**🛡️ Tahap 2: Proteksi Kebijakan & Otorisasi Manajerial**")
                 st.caption("Kasus S02: Permintaan upgrade di luar hak reservasi ditahan oleh Policy Guardrail guna memproteksi margin hotel (Zero Cost Leakage).")
-                if st.button("▶️ Putar Demo 2 (S02)", key="guided_tour_s02", use_container_width=True):
+                if st.button("▶️ Uji Kasus 2 (S02: Proteksi Kebijakan)", key="guided_tour_s02", use_container_width=True):
                     _start_scenario(model, "S02", "mobile")
                     st.session_state["autoplay"] = True
-                    st.toast("▶️ Memutar Demo 2 (S02: Proteksi Biaya & Policy Guardrail)...", icon="🛡️")
+                    st.toast("▶️ Menjalankan Evaluasi Tahap 2 (S02: Penegakan Policy Guardrail)...", icon="🛡️")
                     st.rerun()
         with gt_c3:
             with st.container(border=True):
-                st.markdown("**📊 Langkah 3: Validasi Empiris & ROI Bisnis**")
+                st.markdown("**📊 Tahap 3: Validasi Empiris & ROI Bisnis**")
                 st.caption(
                     "Tunjukkan pembuktian keunggulan sistem pada **Tab 3 (Evaluasi, Bisnis & Audit DB)**:\n\n"
                     "• **Efisiensi Jaringan:** Pemotongan payload transmisi hingga **64.9%** (1.47 KB vs 4.20 KB) via migrasi koper state SHA-256.\n"
@@ -974,7 +974,7 @@ def render_sidebar(model: Any) -> None:
                     st.caption(f"Pesan: *“{short_msg}”*")
 
         st.markdown("**💡 Panduan Cepat:**")
-        st.info("Gunakan bilah **Pilihan Skenario** atau **🎙️ Panduan Presentasi 3-Menit** di atas layar utama untuk menjalankan demo interaktif.")
+        st.info("Gunakan bilah **Pilihan Skenario Kasus** atau **🧭 Alur Demonstrasi Arsitektur** di atas layar utama untuk menjalankan evaluasi interaktif.")
 
         st.divider()
 
